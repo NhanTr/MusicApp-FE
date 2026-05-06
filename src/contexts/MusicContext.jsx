@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 
-import { fetchWithAuthJson } from '@/lib/api'
+import { apiUtils, songsApi } from '@/lib/api'
 
 const MusicContext = createContext(null)
 
@@ -15,13 +15,8 @@ export function MusicProvider({ children }) {
     setSongsError('')
 
     try {
-      const data = await fetchWithAuthJson('/api/songs/trending', {
-        headers: {
-          Accept: 'application/json',
-        },
-      })
-
-      const items = Array.isArray(data) ? data : data?.data?.content || data?.content || []
+      const data = await songsApi.getTrendingSongs()
+      const items = apiUtils.extractList(data)
 
       setSongs(items)
       setCurrentSong((prev) => prev || items[0] || null)

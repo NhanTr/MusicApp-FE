@@ -4,7 +4,7 @@ import {Button} from "@/components/ui/button";
 import {Link} from "react-router-dom";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { apiJson } from "@/lib/api";
+import { authApi } from "@/lib/api";
 
 function SignUpPage() {
     const [username, setUsername] = useState("");
@@ -26,13 +26,7 @@ function SignUpPage() {
                 password,
             };
 
-            await apiJson("/api/auth/register", {
-                method: "POST",
-                headers: {
-                    Accept: "application/json",
-                },
-                body: payload,
-            });
+            await authApi.register(payload);
         } catch (err) {
             setError(err.message || "Đăng ký thất bại. Vui lòng thử lại.");
         } finally {
@@ -41,7 +35,8 @@ function SignUpPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100">
+            <div className="flex items-center justify-center p-4 pt-10">
             <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
                 <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold text-red-600 mb-2">MusicFlow</h1>
@@ -121,6 +116,7 @@ function SignUpPage() {
                     Đăng nhập
                 </Link>
                 </p>
+            </div>
             </div>
         </div>
     );

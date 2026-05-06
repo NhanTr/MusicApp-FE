@@ -1,32 +1,48 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Music2 } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 
 import { useMusic } from '@/contexts/MusicContext'
 
 export default function Trending() {
   const { songs, songsLoading, songsError, reloadSongs, setCurrentSong } = useMusic()
+  const [searchParams] = useSearchParams()
   const INITIAL_LIMIT = 5
   const LOAD_MORE_STEP = 5
   const [visibleCount, setVisibleCount] = useState(INITIAL_LIMIT)
   const listRef = useRef(null)
+  const searchQuery = searchParams.get('search')?.trim().toLowerCase() || ''
 
-  const displayedSongs = songs.slice(0, visibleCount)
+  const filteredSongs = useMemo(() => {
+    if (!searchQuery) return songs
+
+    return songs.filter((song) => {
+      const title = (song.title || song.name || song.songName || '').toLowerCase()
+      const artistName = (
+        typeof song.artist === 'string' ? song.artist : song.artist?.name || ''
+      ).toLowerCase()
+      const albumName = (song.album?.name || '').toLowerCase()
+      return title.includes(searchQuery) || artistName.includes(searchQuery) || albumName.includes(searchQuery)
+    })
+  }, [songs, searchQuery])
+
+  const displayedSongs = filteredSongs.slice(0, visibleCount)
 
   useEffect(() => {
     setVisibleCount(INITIAL_LIMIT)
-  }, [songs])
+  }, [songs, searchQuery])
 
   function handleListScroll(e) {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
     const isNearBottom = scrollTop + clientHeight >= scrollHeight - 16
 
-    if (isNearBottom && visibleCount < songs.length) {
-      setVisibleCount((prev) => Math.min(prev + LOAD_MORE_STEP, songs.length))
+    if (isNearBottom && visibleCount < filteredSongs.length) {
+      setVisibleCount((prev) => Math.min(prev + LOAD_MORE_STEP, filteredSongs.length))
     }
   }
 
   useEffect(() => {
-    if (songsLoading || songsError || visibleCount >= songs.length) {
+    if (songsLoading || songsError || visibleCount >= filteredSongs.length) {
       return
     }
 
@@ -38,9 +54,9 @@ export default function Trending() {
     const hasOverflow = listEl.scrollHeight > listEl.clientHeight + 2
 
     if (!hasOverflow) {
-      setVisibleCount((prev) => Math.min(prev + LOAD_MORE_STEP, songs.length))
+      setVisibleCount((prev) => Math.min(prev + LOAD_MORE_STEP, filteredSongs.length))
     }
-  }, [songsLoading, songsError, songs.length, visibleCount])
+  }, [songsLoading, songsError, filteredSongs.length, visibleCount])
 
   return (
     <div>
@@ -67,7 +83,7 @@ export default function Trending() {
         {!songsLoading && !songsError && (
           <>
             <div className="mb-3 text-xs text-slate-500">
-              Hiển thị {displayedSongs.length}/{songs.length} bài hát
+              Hiển thị {displayedSongs.length}/{filteredSongs.length} bài hát
             </div>
 
             <div
@@ -91,9 +107,9 @@ export default function Trending() {
               </div>
               ))}
 
-              {!songs.length && <p className="text-sm text-slate-500">Chưa có bài hát nào.</p>}
+              {!filteredSongs.length && <p className="text-sm text-slate-500">Chưa có bài hát nào.</p>}
 
-              {visibleCount < songs.length && (
+              {visibleCount < filteredSongs.length && (
                 <p className="text-xs text-slate-400 text-center py-2">Kéo xuống để tải thêm...</p>
               )}
             </div>

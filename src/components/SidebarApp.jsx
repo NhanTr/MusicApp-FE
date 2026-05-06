@@ -1,27 +1,35 @@
 
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Music, Compass, Grid3x3, Heart, LogOut, Upload } from 'lucide-react'
+import { Clock3, Compass, Heart, LibraryBig, LogOut, Search, Upload, UserCircle2 } from 'lucide-react'
+
+import { authApi } from '@/lib/api'
 
 function SidebarApp() {
   const navigate = useNavigate()
-  const [user] = useState(null)
-  const [genres] = useState(['Pop', 'Rock', 'Hip-Hop', 'Jazz', 'Electronic'])
+  const user = null
 
-  function handleLogout() {
-    navigate('/login')
+  async function handleLogout() {
+    try {
+      await authApi.logout()
+    } catch {
+      // Ignore logout API errors and clear local session anyway.
+    } finally {
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      navigate('/login')
+    }
+  }
+
+  function navClass({ isActive }) {
+    return [
+      'flex items-center gap-3 px-4 py-3 rounded-lg transition text-sm',
+      isActive ? 'bg-red-700/90 text-white shadow-sm' : 'hover:bg-red-700/70 text-red-50',
+    ].join(' ')
   }
 
   return (
-    <aside className="w-64 bg-gradient-to-b from-red-800 to-red-900 text-white flex flex-col h-screen overflow-y-auto">
-      {/* Header */}
-      <div className="p-6 border-b border-red-700">
-        <Link to="/" className="flex items-center gap-2">
-          <Music className="w-8 h-8" />
-          <h1 className="text-2xl font-bold">MusicFlow</h1>
-        </Link>
-      </div>
+    <aside className="w-[280px] min-w-[280px] max-w-[280px] h-[calc(100vh-5.5rem)] rounded-2xl bg-gradient-to-b from-red-800 to-red-900 text-white flex flex-col overflow-y-auto shadow-lg">
 
       {/* User Info */}
       {user && (
@@ -35,43 +43,62 @@ function SidebarApp() {
 
       {/* Menu */}
       <nav className="flex-1 p-4 space-y-2">
-        <Link
+        <NavLink
           to="/music"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-700/70 transition"
+          end
+          className={navClass}
         >
           <Compass className="w-5 h-5" />
           <span>Nhạc Xu Hướng</span>
-        </Link>
+        </NavLink>
 
-        <div className="px-4 py-2 text-sm font-semibold text-red-100 mt-6 mb-2">
-          Thể Loại
-        </div>
-        {genres.map((genre) => (
-          <Link
-            key={genre}
-            to={`/music/genre/${encodeURIComponent(genre.toLowerCase())}`}
-            className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-red-700/70 transition text-sm"
-          >
-            <Grid3x3 className="w-4 h-4" />
-            <span>{genre}</span>
-          </Link>
-        ))}
+        <NavLink
+          to="/music/search"
+          className={navClass}
+        >
+          <Search className="w-5 h-5" />
+          <span>Tìm Kiếm</span>
+        </NavLink>
 
-        <Link
+        <NavLink
+          to="/music/playlists"
+          className={navClass}
+        >
+          <LibraryBig className="w-5 h-5" />
+          <span>Playlist</span>
+        </NavLink>
+
+        <NavLink
           to="/music/favorites"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-700/70 transition mt-6"
+          className={navClass}
         >
           <Heart className="w-5 h-5" />
-          <span>My Album</span>
-        </Link>
+          <span>Yêu Thích</span>
+        </NavLink>
 
-        <Link
+        <NavLink
+          to="/music/history"
+          className={navClass}
+        >
+          <Clock3 className="w-5 h-5" />
+          <span>Lịch Sử Nghe</span>
+        </NavLink>
+
+        <NavLink
           to="/music/upload"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-700/70 transition"
+          className={navClass}
         >
           <Upload className="w-5 h-5" />
           <span>Tải Nhạc</span>
-        </Link>
+        </NavLink>
+
+        <NavLink
+          to="/music/profile"
+          className={navClass}
+        >
+          <UserCircle2 className="w-5 h-5" />
+          <span>Tài Khoản</span>
+        </NavLink>
       </nav>
 
       {/* Logout Button */}

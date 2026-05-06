@@ -1,38 +1,15 @@
 import { Link } from "react-router-dom";
 import { Music, Play, Heart, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import AppHeader from "@/components/AppHeader";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
-      
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          
-          <Link to="/" className="flex items-center gap-2">
-            <Music className="w-8 h-8 text-red-600" />
-            <span className="text-2xl font-bold text-red-600">MusicFlow</span>
-          </Link>
-
-          <div className="flex gap-4">
-            <Link to="/login">
-              <Button className="text-red-600 border border-red-600 hover:bg-red-50">
-                Đăng nhập
-              </Button>
-            </Link>
-
-            <Link to="/signup">
-              <Button className="bg-red-600 hover:bg-red-700 text-white">
-                Đăng ký
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <AppHeader showActions />
 
       {/* Hero */}
-      <div className="pt-24 pb-20 px-4">
+      <div className="pt-12 pb-20 px-4">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <h1 className="text-6xl font-bold text-gray-900 leading-tight">
             Phát nhạc của bạn,
