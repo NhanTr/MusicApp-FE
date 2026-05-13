@@ -4,16 +4,21 @@ import { UploadCloud } from 'lucide-react'
 import { songsApi } from '@/lib/api'
 
 export default function Upload() {
-  const [file, setFile] = useState(null)
+  const [fileSound, setFileSound] = useState(null)
+  const [fileImage, setFileImage] = useState(null)
   const [title, setTitle] = useState('')
-  const [artist, setArtist] = useState('')
+  const [duration, setDuration] = useState('0')
   const [message, setMessage] = useState('')
   const [isUploading, setIsUploading] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!file) {
+    if (!fileSound) {
       setMessage('Vui lòng chọn file nhạc.')
+      return
+    }
+    if (!title.trim()) {
+      setMessage('Vui lòng nhập tên bài hát.')
       return
     }
 
@@ -22,15 +27,17 @@ export default function Upload() {
 
     try {
       const formData = new FormData()
-      formData.append('file', file)
-      if (title) formData.append('title', title)
-      if (artist) formData.append('artist', artist)
+      formData.append('fileSound', fileSound)
+      if (fileImage) formData.append('fileImage', fileImage)
+      formData.append('title', title.trim())
+      formData.append('duration', duration || '0')
 
       await songsApi.uploadSong(formData)
-      setFile(null)
+      setFileSound(null)
+      setFileImage(null)
       setTitle('')
-      setArtist('')
-      setMessage('Tải nhạc thành công.')
+      setDuration('0')
+      setMessage('Tải nhạc thành công. Bài hát đang chờ duyệt.')
     } catch (err) {
       setMessage(err.message || 'Tải nhạc thất bại.')
     } finally {
@@ -57,22 +64,33 @@ export default function Upload() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Nghệ sĩ</label>
-          <input
-            value={artist}
-            onChange={(e) => setArtist(e.target.value)}
-            placeholder="Tên nghệ sĩ"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-red-300"
-          />
-        </div>
-
-        <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">File nhạc</label>
           <input
             type="file"
             accept="audio/*"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            onChange={(e) => setFileSound(e.target.files?.[0] || null)}
             className="block w-full text-sm text-slate-600"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Ảnh bìa (tuỳ chọn)</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFileImage(e.target.files?.[0] || null)}
+            className="block w-full text-sm text-slate-600"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Thời lượng (giây)</label>
+          <input
+            type="number"
+            min="0"
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-red-300"
           />
         </div>
 

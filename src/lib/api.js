@@ -29,6 +29,36 @@ export function getAccessToken() {
 	return window.localStorage.getItem('accessToken')
 }
 
+export function getRefreshToken() {
+	if (typeof window === 'undefined') {
+		return null
+	}
+
+	return window.localStorage.getItem('refreshToken')
+}
+
+export function setAccessToken(token) {
+	if (typeof window === 'undefined') {
+		return
+	}
+
+	if (!token) {
+		window.localStorage.removeItem('accessToken')
+		return
+	}
+
+	window.localStorage.setItem('accessToken', token)
+}
+
+export function clearAuthTokens() {
+	if (typeof window === 'undefined') {
+		return
+	}
+
+	window.localStorage.removeItem('accessToken')
+	window.localStorage.removeItem('refreshToken')
+}
+
 export function createApiError(message, response, data = null) {
 	const error = new Error(message)
 	error.status = response?.status
@@ -36,20 +66,10 @@ export function createApiError(message, response, data = null) {
 	return error
 }
 
-async function parseResponse(response) {
-	const contentType = response.headers.get('content-type') || ''
+let refreshTokenPromise = null
 
-	if (contentType.includes('application/json')) {
-		return response.json()
-	}
-
-	const text = await response.text()
-	return text ? { message: text } : null
-}
-
-export async function apiFetch(path, options = {}) {
+function buildRequestInit(options = {}) {
 	const { auth = false, headers, body, ...rest } = options
-
 	const requestHeaders = new Headers(headers || {})
 
 	if (auth) {
@@ -73,20 +93,97 @@ export async function apiFetch(path, options = {}) {
 		requestBody = JSON.stringify(body)
 	}
 
-	const response = await fetch(buildUrl(path), {
-		...rest,
-		headers: requestHeaders,
-		body: requestBody,
-	})
+	return {
+		auth,
+		requestInit: {
+			...rest,
+			headers: requestHeaders,
+			body: requestBody,
+		},
+	}
+}
 
-	const data = await parseResponse(response)
+async function parseResponse(response) {
+	const contentType = response.headers.get('content-type') || ''
 
-	if (!response.ok) {
-		const message = data?.message || data?.error || 'Request failed'
-		throw createApiError(message, response, data)
+	if (contentType.includes('application/json')) {
+		return response.json()
 	}
 
-	return { response, data }
+	const text = await response.text()
+	return text ? { message: text } : null
+}
+
+export async function apiFetch(path, options = {}) {
+	const { auth, requestInit } = buildRequestInit(options)
+
+	const executeRequest = () => fetch(buildUrl(path), requestInit)
+
+	const handleResponse = async (response) => {
+		const data = await parseResponse(response)
+
+		if (!response.ok) {
+			const message = data?.message || data?.error || data?.data?.message || 'Request failed'
+			throw createApiError(message, response, data)
+		}
+
+		return { response, data }
+	}
+
+	const initialResponse = await executeRequest()
+
+	if (initialResponse.status !== 401 || !auth || options.skipAuthRefresh) {
+		return handleResponse(initialResponse)
+	}
+
+	const refreshToken = getRefreshToken()
+	if (!refreshToken) {
+		return handleResponse(initialResponse)
+	}
+
+	if (!refreshTokenPromise) {
+		refreshTokenPromise = (async () => {
+			const refreshedData = await apiJson('/api/auth/refresh-token', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${refreshToken}`,
+				},
+			})
+
+			const nextAccessToken = refreshedData?.accessToken || refreshedData?.data?.accessToken
+			if (!nextAccessToken) {
+				throw new Error('Missing access token in refresh response')
+			}
+
+			setAccessToken(nextAccessToken)
+			return nextAccessToken
+		})().finally(() => {
+			refreshTokenPromise = null
+		})
+	}
+
+	try {
+		const nextAccessToken = await refreshTokenPromise
+		requestInit.headers.set('Authorization', `Bearer ${nextAccessToken}`)
+		const retriedResponse = await executeRequest()
+
+		if (retriedResponse.status === 401) {
+			clearAuthTokens()
+		}
+
+		return handleResponse(retriedResponse)
+	} catch (error) {
+		clearAuthTokens()
+		throw error
+	}
+}
+
+function unwrapApiResponse(payload) {
+	if (payload && typeof payload === 'object' && 'code' in payload && 'data' in payload) {
+		return payload.data
+	}
+
+	return payload
 }
 
 export async function fetchWithAuth(path, options = {}) {
@@ -95,12 +192,12 @@ export async function fetchWithAuth(path, options = {}) {
 
 export async function apiJson(path, options = {}) {
 	const { data } = await apiFetch(path, options)
-	return data
+	return unwrapApiResponse(data)
 }
 
 export async function fetchWithAuthJson(path, options = {}) {
 	const { data } = await fetchWithAuth(path, options)
-	return data
+	return unwrapApiResponse(data)
 }
 
 function toQueryString(params = {}) {
@@ -139,10 +236,18 @@ export const apiUtils = {
 
 export const authApi = {
 	login: (payload) => apiJson('/api/auth/login', { method: 'POST', body: payload }),
+	requestLoginOtp: (payload) => apiJson('/api/auth/login/send-otp', { method: 'POST', body: payload }),
+	verifyLoginOtp: (payload) => apiJson('/api/auth/login/verify-otp', { method: 'POST', body: payload }),
+	requestRegisterOtp: (payload) => apiJson('/api/auth/register/send-otp', { method: 'POST', body: payload }),
 	register: (payload) => apiJson('/api/auth/register', { method: 'POST', body: payload }),
 	logout: () => apiJson('/api/auth/logout', { method: 'POST', auth: true }),
-	refreshToken: (payload) =>
-		apiJson('/api/auth/refresh-token', { method: 'POST', body: payload, auth: true }),
+	refreshToken: () =>
+		apiJson('/api/auth/refresh-token', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${getRefreshToken() || ''}`,
+			},
+		}),
 	updatePassword: (payload) =>
 		apiJson('/api/auth/update-password', { method: 'PUT', body: payload, auth: true }),
 	me: () => fetchWithAuthJson('/api/auth/me'),
@@ -158,7 +263,7 @@ export const songsApi = {
 		apiJson(`/api/songs/${id}`, { method: 'PUT', body: payload, auth: true }),
 	deleteSong: (id) => apiJson(`/api/songs/${id}`, { method: 'DELETE', auth: true }),
 	uploadSong: (formData) =>
-		apiFetch('/api/uploads', { method: 'POST', auth: true, body: formData }),
+		apiJson('/api/songs', { method: 'POST', auth: true, body: formData }),
 }
 
 export const playlistsApi = {
@@ -228,4 +333,85 @@ export const adminApi = {
 	banUser: (id) => apiJson(`/api/admin/users/${id}/ban`, { method: 'PUT', auth: true }),
 	unbanUser: (id) => apiJson(`/api/admin/users/${id}/unban`, { method: 'PUT', auth: true }),
 	deleteAdminSong: (id) => apiJson(`/api/admin/songs/${id}`, { method: 'DELETE', auth: true }),
+}
+
+export const userApi = {
+	getUserProfile: (userId) => fetchWithAuthJson(`/api/users/${userId}`),
+	updateProfile: (payload) => apiJson('/api/users/profile', { method: 'PUT', body: payload, auth: true }),
+	uploadAvatar: (formData) => apiJson('/api/users/avatar', { method: 'POST', auth: true, body: formData }),
+	getUserStats: () => fetchWithAuthJson('/api/users/stats'),
+	getTopSongs: () => fetchWithAuthJson('/api/users/top-songs'),
+	getTopArtists: () => fetchWithAuthJson('/api/users/top-artists'),
+}
+
+export const categoriesApi = {
+	getCategories: () => fetchWithAuthJson('/api/categories'),
+	getCategoryById: (id) => fetchWithAuthJson(`/api/categories/${id}`),
+	getSongsByCategory: (categoryId, params = {}) =>
+		fetchWithAuthJson(`/api/categories/${categoryId}/songs${toQueryString(params)}`),
+}
+
+export const recommendationsApi = {
+	getRecommendedSongs: (params = {}) =>
+		fetchWithAuthJson(`/api/recommendations/songs${toQueryString(params)}`),
+	getRecommendedPlaylists: (params = {}) =>
+		fetchWithAuthJson(`/api/recommendations/playlists${toQueryString(params)}`),
+	getRecommendedArtists: (params = {}) =>
+		fetchWithAuthJson(`/api/recommendations/artists${toQueryString(params)}`),
+}
+
+export const commentsApi = {
+	getSongComments: (songId, params = {}) =>
+		fetchWithAuthJson(`/api/songs/${songId}/comments${toQueryString(params)}`),
+	addComment: (songId, payload) =>
+		apiJson(`/api/songs/${songId}/comments`, { method: 'POST', body: payload, auth: true }),
+	updateComment: (songId, commentId, payload) =>
+		apiJson(`/api/songs/${songId}/comments/${commentId}`, { method: 'PUT', body: payload, auth: true }),
+	deleteComment: (songId, commentId) =>
+		apiJson(`/api/songs/${songId}/comments/${commentId}`, { method: 'DELETE', auth: true }),
+	likeComment: (songId, commentId) =>
+		apiJson(`/api/songs/${songId}/comments/${commentId}/like`, { method: 'POST', auth: true }),
+	unlikeComment: (songId, commentId) =>
+		apiJson(`/api/songs/${songId}/comments/${commentId}/unlike`, { method: 'DELETE', auth: true }),
+}
+
+export const sharingApi = {
+	sharePlaylist: (playlistId) =>
+		apiJson(`/api/playlists/${playlistId}/share`, { method: 'POST', auth: true }),
+	shareSong: (songId) => apiJson(`/api/songs/${songId}/share`, { method: 'POST', auth: true }),
+	shareArtist: (artistId) =>
+		apiJson(`/api/artists/${artistId}/share`, { method: 'POST', auth: true }),
+	getSharedContent: (shareCode) => fetchWithAuthJson(`/api/shared/${shareCode}`),
+}
+
+export const notificationsApi = {
+	getNotifications: (params = {}) =>
+		fetchWithAuthJson(`/api/notifications${toQueryString(params)}`),
+	markAsRead: (notificationId) =>
+		apiJson(`/api/notifications/${notificationId}/read`, { method: 'PUT', auth: true }),
+	markAllAsRead: () => apiJson('/api/notifications/read-all', { method: 'PUT', auth: true }),
+	deleteNotification: (notificationId) =>
+		apiJson(`/api/notifications/${notificationId}`, { method: 'DELETE', auth: true }),
+	deleteAllNotifications: () => apiJson('/api/notifications', { method: 'DELETE', auth: true }),
+}
+
+export const ratingsApi = {
+	getSongRating: (songId) => fetchWithAuthJson(`/api/songs/${songId}/rating`),
+	rateSong: (songId, rating) =>
+		apiJson(`/api/songs/${songId}/rating`, { method: 'POST', body: { rating }, auth: true }),
+	updateRating: (songId, rating) =>
+		apiJson(`/api/songs/${songId}/rating`, { method: 'PUT', body: { rating }, auth: true }),
+	deleteRating: (songId) => apiJson(`/api/songs/${songId}/rating`, { method: 'DELETE', auth: true }),
+}
+
+export const playlistDetailsApi = {
+	getPlaylistSongs: (playlistId, params = {}) =>
+		fetchWithAuthJson(`/api/playlists/${playlistId}/songs${toQueryString(params)}`),
+	changePlaylistCover: (playlistId, formData) =>
+		apiJson(`/api/playlists/${playlistId}/cover`, { method: 'POST', auth: true, body: formData }),
+}
+
+export const albumDetailsApi = {
+	getAlbumSongs: (albumId, params = {}) =>
+		fetchWithAuthJson(`/api/albums/${albumId}/songs${toQueryString(params)}`),
 }

@@ -3,7 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Album, Heart, ListMusic, Music2, Play, UserRound } from 'lucide-react'
 
 import { useMusic } from '@/contexts/MusicContext'
-import { apiUtils, searchApi } from '@/lib/api'
+import { apiUtils, searchApi, favoritesApi } from '@/lib/api'
+import LikeButton from '@/components/LikeButton'
 
 function normalizeSearchResults(data) {
   if (!data) {
@@ -20,23 +21,30 @@ function normalizeSearchResults(data) {
   }
 }
 
-function SongRow({ song, onPlay }) {
+function SongRow({ song, onPlay, isLiked, onLikeChange }) {
   const title = song.title || song.name || song.songName || 'Untitled song'
   const artistName = typeof song.artist === 'string' ? song.artist : song.artist?.name || 'Unknown artist'
 
   return (
-    <button
-      type="button"
-      onClick={() => onPlay(song)}
-      className="w-full flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:bg-slate-100 transition"
-    >
+    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 hover:bg-slate-100 transition group">
       <Music2 className="w-4 h-4 text-red-700 shrink-0" />
-      <div className="min-w-0 flex-1">
+      <button
+        type="button"
+        onClick={() => onPlay(song)}
+        className="min-w-0 flex-1 text-left"
+      >
         <p className="font-medium text-slate-900 truncate">{title}</p>
         <p className="text-sm text-slate-500 truncate">{artistName}</p>
+      </button>
+      <Play className="w-4 h-4 text-slate-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+        <LikeButton
+          songId={song.id || song._id}
+          initialLiked={isLiked}
+          onLikeChange={onLikeChange}
+        />
       </div>
-      <Play className="w-4 h-4 text-slate-400 shrink-0" />
-    </button>
+    </div>
   )
 }
 
@@ -47,6 +55,26 @@ export default function SearchPage() {
   const [results, setResults] = useState({ songs: [], artists: [], albums: [], playlists: [] })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [likedSongs, setLikedSongs] = useState(new Set())
+
+  // Load user's favorite songs
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const favorites = await favoritesApi.getFavorites({ size: 1000 })
+        const favoriteIds = new Set(
+          (Array.isArray(favorites) ? favorites : favorites?.data || []).map(
+            (song) => song.id || song._id
+          )
+        )
+        setLikedSongs(favoriteIds)
+      } catch (err) {
+        console.error('Error loading favorites:', err)
+      }
+    }
+
+    loadFavorites()
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -121,7 +149,21 @@ export default function SearchPage() {
             </div>
             <div className="space-y-2">
               {results.songs.map((song) => (
-                <SongRow key={song.id || song._id || song.title} song={song} onPlay={setCurrentSong} />
+                <SongRow 
+                  key={song.id || song._id || song.title} 
+                  song={song} 
+                  onPlay={setCurrentSong}
+                  isLiked={likedSongs.has(song.id || song._id)}
+                  onLikeChange={(isLiked) => {
+                    const newLikedSongs = new Set(likedSongs)
+                    if (isLiked) {
+                      newLikedSongs.add(song.id || song._id)
+                    } else {
+                      newLikedSongs.delete(song.id || song._id)
+                    }
+                    setLikedSongs(newLikedSongs)
+                  }}
+                />
               ))}
             </div>
           </section>

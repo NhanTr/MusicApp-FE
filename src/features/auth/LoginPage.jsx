@@ -12,6 +12,9 @@ function LoginPage() {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [mode, setMode] = useState('password'); // 'password' or 'otp'
+    const [otpRequested, setOtpRequested] = useState(false);
+    const [otpCode, setOtpCode] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -41,6 +44,46 @@ function LoginPage() {
         }
     }
 
+    const handleRequestOtp = async (e) => {
+        e.preventDefault();
+        if (!email) {
+            setError('Vui lòng nhập email.');
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        try {
+            await authApi.requestLoginOtp({ email: email });
+            setOtpRequested(true);
+        } catch (err) {
+            setError(err.message || 'Không thể gửi mã OTP. Vui lòng thử lại.');
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        if (!email || !otpCode) {
+            setError('Vui lòng nhập email và mã OTP.');
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        try {
+            const data = await authApi.verifyLoginOtp({ email: email, otp: otpCode });
+            localStorage.setItem('accessToken', data.accessToken);
+            localStorage.setItem('refreshToken', data.refreshToken);
+            window.location.href = '/music';
+        } catch (err) {
+            setError(err.message || 'Xác thực OTP thất bại. Vui lòng thử lại.');
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
 
 
     return (
@@ -52,7 +95,27 @@ function LoginPage() {
             <p className="text-gray-600">Đăng nhập để phát nhạc</p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-6">
+            <div className="flex justify-between items-center mb-4">
+                <div className="text-sm">
+                    <button
+                        type="button"
+                        onClick={() => { setMode('password'); setOtpRequested(false); setError(null); }}
+                        className={`mr-3 ${mode === 'password' ? 'font-semibold text-red-600' : 'text-gray-600'}`}
+                    >
+                        Mật khẩu
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => { setMode('otp'); setError(null); }}
+                        className={`${mode === 'otp' ? 'font-semibold text-red-600' : 'text-gray-600'}`}
+                    >
+                        Đăng nhập bằng OTP
+                    </button>
+                </div>
+            </div>
+
+            {mode === 'password' && (
+                <form onSubmit={handleLogin} className="space-y-6">
             <FieldGroup>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
@@ -104,7 +167,66 @@ function LoginPage() {
             >
                 {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </Button>
-            </form>
+                </form>
+            )}
+
+            {mode === 'otp' && (
+                <div>
+                    <form onSubmit={otpRequested ? handleVerifyOtp : handleRequestOtp} className="space-y-6">
+                        <FieldGroup>
+                            <FieldLabel htmlFor="email">Email</FieldLabel>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="you@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                disabled={isLoading}
+                                required
+                            />
+                        </FieldGroup>
+
+                        {otpRequested && (
+                            <FieldGroup>
+                                <FieldLabel htmlFor="otp">Mã OTP</FieldLabel>
+                                <Input
+                                    id="otp"
+                                    type="text"
+                                    placeholder="Nhập mã OTP"
+                                    value={otpCode}
+                                    onChange={(e) => setOtpCode(e.target.value)}
+                                    disabled={isLoading}
+                                    required
+                                />
+                            </FieldGroup>
+                        )}
+
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                                {error}
+                            </div>
+                        )}
+
+                        <Button
+                            type="submit"
+                            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (otpRequested ? 'Xác thực...' : 'Gửi mã...') : (otpRequested ? 'Xác thực OTP' : 'Gửi mã OTP')}
+                        </Button>
+                    </form>
+
+                    <div className="text-center mt-4">
+                        <button
+                            type="button"
+                            onClick={() => { setMode('password'); setOtpRequested(false); setError(null); }}
+                            className="text-sm text-gray-600 hover:text-red-600"
+                        >
+                            Quay lại đăng nhập bằng mật khẩu
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <p className="text-center mt-6 text-gray-600">
             Chưa có tài khoản?{' '}

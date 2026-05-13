@@ -12,11 +12,11 @@ function InnerLayout() {
     <div className="min-h-screen bg-slate-50">
       <AppHeader />
       <div className="flex gap-4 px-4 pt-4">
-        <div className="hidden md:block">
+        <div className="sticky top-[5.5rem] hidden self-start md:block">
           <SidebarApp />
         </div>
 
-        <main className="flex-1 p-5 md:p-8 pb-44">
+        <main className="flex-1 p-5 md:p-8 pb-60">
           <Outlet />
         </main>
       </div>

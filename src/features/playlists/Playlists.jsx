@@ -42,7 +42,7 @@ export default function Playlists() {
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('mine')
   const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
 
   async function loadPlaylists() {
@@ -72,11 +72,16 @@ export default function Playlists() {
 
   async function handleCreatePlaylist(e) {
     e.preventDefault()
+    if (!name.trim()) {
+      setError('Tên playlist không được để trống.')
+      return
+    }
+
     setIsCreating(true)
     try {
-      await playlistsApi.createPlaylist({ name, description })
+      await playlistsApi.createPlaylist({ name: name.trim(), isPublic })
       setName('')
-      setDescription('')
+      setIsPublic(false)
       await loadPlaylists()
     } catch (err) {
       setError(err.message || 'Không tạo được playlist.')
@@ -114,12 +119,14 @@ export default function Playlists() {
             placeholder="Tên playlist"
             className="rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-red-300"
           />
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Mô tả"
-            className="rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-red-300"
-          />
+          <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+            />
+            Đặt playlist ở chế độ Public
+          </label>
         </div>
         <button
           type="submit"

@@ -24,7 +24,7 @@ export default function Profile() {
       try {
         const data = await authApi.me()
         if (isMounted) {
-          setUser(data?.data || data)
+          setUser(data)
         }
       } catch (err) {
         if (isMounted) {
@@ -55,7 +55,11 @@ export default function Profile() {
     setError('')
 
     try {
-      await authApi.updatePassword({ currentPassword, newPassword })
+      await authApi.updatePassword({
+        currentPassword,
+        newPassword,
+        confirmNewPassword: confirmPassword,
+      })
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')

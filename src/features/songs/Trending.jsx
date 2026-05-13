@@ -3,6 +3,8 @@ import { Music2 } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 
 import { useMusic } from '@/contexts/MusicContext'
+import LikeButton from '@/components/LikeButton'
+import { favoritesApi } from '@/lib/api'
 
 export default function Trending() {
   const { songs, songsLoading, songsError, reloadSongs, setCurrentSong } = useMusic()
@@ -10,6 +12,7 @@ export default function Trending() {
   const INITIAL_LIMIT = 5
   const LOAD_MORE_STEP = 5
   const [visibleCount, setVisibleCount] = useState(INITIAL_LIMIT)
+  const [likedSongs, setLikedSongs] = useState(new Set())
   const listRef = useRef(null)
   const searchQuery = searchParams.get('search')?.trim().toLowerCase() || ''
 
@@ -27,6 +30,25 @@ export default function Trending() {
   }, [songs, searchQuery])
 
   const displayedSongs = filteredSongs.slice(0, visibleCount)
+
+  // Load user's favorite songs
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const favorites = await favoritesApi.getFavorites({ size: 1000 })
+        const favoriteIds = new Set(
+          (Array.isArray(favorites) ? favorites : favorites?.data || []).map(
+            (song) => song.id || song._id
+          )
+        )
+        setLikedSongs(favoriteIds)
+      } catch (err) {
+        console.error('Error loading favorites:', err)
+      }
+    }
+
+    loadFavorites()
+  }, [])
 
   useEffect(() => {
     setVisibleCount(INITIAL_LIMIT)
@@ -95,14 +117,29 @@ export default function Trending() {
               <div
                 key={song.id}
                 onClick={() => setCurrentSong(song)}
-                className="cursor-pointer flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 hover:bg-slate-100"
+                className="cursor-pointer flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 hover:bg-slate-100 group"
               >
-                <Music2 className="w-4 h-4 text-red-700" />
+                <Music2 className="w-4 h-4 text-red-700 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-slate-900 truncate">{song.title || song.name || song.songName || 'Untitled song'}</p>
                   <p className="text-sm text-slate-500 truncate">
                     {song.artist?.name || song.artist || 'Unknown artist'}
                   </p>
+                </div>
+                <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <LikeButton
+                    songId={song.id || song._id}
+                    initialLiked={likedSongs.has(song.id || song._id)}
+                    onLikeChange={(isLiked) => {
+                      const newLikedSongs = new Set(likedSongs)
+                      if (isLiked) {
+                        newLikedSongs.add(song.id || song._id)
+                      } else {
+                        newLikedSongs.delete(song.id || song._id)
+                      }
+                      setLikedSongs(newLikedSongs)
+                    }}
+                  />
                 </div>
               </div>
               ))}

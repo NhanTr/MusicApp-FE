@@ -23,14 +23,14 @@ function AppHeader({ showActions = false }) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-red-100 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 md:px-6">
+      <div className="mx-auto flex w-full items-center gap-4 px-4 py-3 md:px-6">
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <Music className="h-7 w-7 text-red-600" />
           <span className="text-xl font-bold text-red-600">MusicFlow</span>
         </Link>
 
-        <form onSubmit={handleSubmit} className="flex flex-1 items-center">
-          <div className="relative w-full max-w-2xl">
+        <form onSubmit={handleSubmit} className="ml-auto flex w-full max-w-3xl items-center justify-end">
+          <div className="relative w-full">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               value={query}

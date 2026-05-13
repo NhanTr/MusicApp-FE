@@ -1,13 +1,37 @@
 
+import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Clock3, Compass, Heart, LibraryBig, LogOut, Search, Upload, UserCircle2 } from 'lucide-react'
+import { Clock3, Compass, Heart, Home, LibraryBig, LogOut, Search, Upload, UserCircle2 } from 'lucide-react'
 
-import { authApi } from '@/lib/api'
+import { authApi, clearAuthTokens } from '@/lib/api'
 
 function SidebarApp() {
   const navigate = useNavigate()
-  const user = null
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadUser() {
+      try {
+        const data = await authApi.me()
+        if (isMounted) {
+          setUser(data)
+        }
+      } catch {
+        if (isMounted) {
+          setUser(null)
+        }
+      }
+    }
+
+    loadUser()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   async function handleLogout() {
     try {
@@ -15,8 +39,7 @@ function SidebarApp() {
     } catch {
       // Ignore logout API errors and clear local session anyway.
     } finally {
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
+      clearAuthTokens()
       navigate('/login')
     }
   }
@@ -29,15 +52,16 @@ function SidebarApp() {
   }
 
   return (
-    <aside className="w-[280px] min-w-[280px] max-w-[280px] h-[calc(100vh-5.5rem)] rounded-2xl bg-gradient-to-b from-red-800 to-red-900 text-white flex flex-col overflow-y-auto shadow-lg">
+    <aside className="flex h-[calc(100vh-5.5rem)] w-[280px] min-w-[280px] max-w-[280px] flex-col overflow-y-auto rounded-2xl bg-gradient-to-b from-red-800 to-red-900 text-white shadow-lg">
 
       {/* User Info */}
       {user && (
-        <div className="p-4 bg-red-800/60 border-b border-red-700">
+        <div className="border-b border-red-700 bg-red-800/60 p-4">
           <p className="text-sm text-red-100">Đã đăng nhập</p>
           <p className="font-semibold text-white truncate">
             {user.email?.split('@')[0] || 'User'}
           </p>
+          <p className="mt-1 text-xs text-red-100/80 truncate">{user.email || ''}</p>
         </div>
       )}
 
@@ -46,6 +70,14 @@ function SidebarApp() {
         <NavLink
           to="/music"
           end
+          className={navClass}
+        >
+          <Home className="w-5 h-5" />
+          <span>Tổng Quan</span>
+        </NavLink>
+
+        <NavLink
+          to="/music/trending"
           className={navClass}
         >
           <Compass className="w-5 h-5" />

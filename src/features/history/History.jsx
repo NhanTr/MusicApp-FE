@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Clock3, Trash2, Trash } from 'lucide-react'
 
-import { historyApi, apiUtils } from '@/lib/api'
+import { historyApi, apiUtils, favoritesApi } from '@/lib/api'
 import { useMusic } from '@/contexts/MusicContext'
+import LikeButton from '@/components/LikeButton'
 
 function getHistorySong(item) {
   return item.song || item.music || item.track || item
@@ -13,6 +14,7 @@ export default function History() {
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [likedSongs, setLikedSongs] = useState(new Set())
 
   async function loadHistory() {
     setLoading(true)
@@ -27,6 +29,25 @@ export default function History() {
       setLoading(false)
     }
   }
+
+  // Load user's favorite songs
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const favorites = await favoritesApi.getFavorites({ size: 1000 })
+        const favoriteIds = new Set(
+          (Array.isArray(favorites) ? favorites : favorites?.data || []).map(
+            (song) => song.id || song._id
+          )
+        )
+        setLikedSongs(favoriteIds)
+      } catch (err) {
+        console.error('Error loading favorites:', err)
+      }
+    }
+
+    loadFavorites()
+  }, [])
 
   useEffect(() => {
     loadHistory()
@@ -83,7 +104,7 @@ export default function History() {
             return (
               <div
                 key={item.id || song.id || title}
-                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 group"
               >
                 <button
                   type="button"
@@ -97,13 +118,28 @@ export default function History() {
                   </div>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => handleDeleteHistory(item.id)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-white"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <LikeButton
+                    songId={song.id || song._id}
+                    initialLiked={likedSongs.has(song.id || song._id)}
+                    onLikeChange={(isLiked) => {
+                      const newLikedSongs = new Set(likedSongs)
+                      if (isLiked) {
+                        newLikedSongs.add(song.id || song._id)
+                      } else {
+                        newLikedSongs.delete(song.id || song._id)
+                      }
+                      setLikedSongs(newLikedSongs)
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteHistory(item.id)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-white"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             )
           })}
