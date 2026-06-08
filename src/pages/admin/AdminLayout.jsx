@@ -50,9 +50,17 @@ export default function AdminLayout() {
         <aside className="rounded-xl border bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-lg font-semibold">Appsibar Admin</h2>
           <nav className="flex flex-col gap-2">
-            <NavLink to="/admin/catalog" className={navClass}>
+            <NavLink to="/admin/artists" className={navClass}>
               <Layers3 className="h-4 w-4" />
-              Tra cứu Artist/Album/Song
+              Quản lí Artist
+            </NavLink>
+            <NavLink to="/admin/albums" className={navClass}>
+              <Layers3 className="h-4 w-4" />
+              Quản lí Album
+            </NavLink>
+            <NavLink to="/admin/songs" className={navClass}>
+              <Layers3 className="h-4 w-4" />
+              Quản lí Song
             </NavLink>
             <NavLink to="/admin/accounts" className={navClass}>
               <ShieldBan className="h-4 w-4" />

@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Music2, RefreshCw } from 'lucide-react'
-import { useSearchParams } from 'react-router-dom'
+import { Music2, Play, RefreshCw } from 'lucide-react'
 
-import { useMusic } from '@/contexts/MusicContext'
 import LikeButton from '@/components/LikeButton'
+import { useMusic } from '@/contexts/MusicContext'
 import { apiUtils, favoritesApi, songsApi } from '@/lib/api'
 import { usePagedSearch } from '@/features/catalog/usePagedSearch'
 import { resolveSongListenerCount } from '@/lib/song-utils'
-import { useCatalogData } from '@/hooks/useCatalogData'
 
 const SORT_OPTIONS = [
   { value: 'listeners-desc', label: 'Nghe nhiều nhất' },
@@ -16,15 +14,11 @@ const SORT_OPTIONS = [
   { value: 'title-desc', label: 'Tên Z-A' },
 ]
 
-export default function Trending() {
+export default function SongsPage() {
   const { setCurrentSong } = useMusic()
-  const [searchParams] = useSearchParams()
   const [likedSongs, setLikedSongs] = useState(new Set())
   const [sortBy, setSortBy] = useState('listeners-desc')
 
-  const searchQuery = searchParams.get('search')?.trim() || ''
-
-  // ✅ Dùng usePagedSearch giống SongsPage — không còn tự quản lý page/totalPages/songs thủ công
   const catalog = usePagedSearch(
     async ({ query, page, size }) => {
       if (query) {
@@ -36,22 +30,8 @@ export default function Trending() {
     { initialSize: 5 },
   )
 
-  // ✅ Lọc client-side theo URL search param (giữ lại tính năng cũ)
-  const filteredSongs = useMemo(() => {
-    const keyword = searchQuery.trim().toLowerCase()
-    if (!keyword) return catalog.items
-
-    return catalog.items.filter((song) => {
-      const title = (song.title || song.name || song.songName || '').toLowerCase()
-      const artistName = (typeof song.artist === 'string' ? song.artist : song.artist?.name || '').toLowerCase()
-      const albumName = (song.album?.name || '').toLowerCase()
-      return title.includes(keyword) || artistName.includes(keyword) || albumName.includes(keyword)
-    })
-  }, [catalog.items, searchQuery])
-
-  // ✅ Sort giống SongsPage
-  const displayedSongs = useMemo(() => {
-    const items = [...filteredSongs]
+  const sortedSongs = useMemo(() => {
+    const items = [...catalog.items]
     items.sort((left, right) => {
       const leftTitle = (left.title || left.name || left.songName || '').toLowerCase()
       const rightTitle = (right.title || right.name || right.songName || '').toLowerCase()
@@ -71,9 +51,8 @@ export default function Trending() {
       }
     })
     return items
-  }, [filteredSongs, sortBy])
+  }, [catalog.items, sortBy])
 
-  // Load favorites
   useEffect(() => {
     const loadFavorites = async () => {
       try {
@@ -91,20 +70,24 @@ export default function Trending() {
   }, [])
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Nhạc Xu Hướng</h1>
-        <p className="text-slate-600 mt-2">Các bài hát đang được nghe nhiều nhất.</p>
-      </div>
+    <div className="space-y-6">
+      <header className="space-y-2">
+        <div className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
+          <Music2 className="h-4 w-4" />
+          Songs
+        </div>
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Bài hát</h1>
+        <p className="text-slate-600">Gõ tìm kiếm để gọi API ngay, chọn số lượng và tải thêm theo lô.</p>
+      </header>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-[1fr_180px] mb-4">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="grid gap-3 md:grid-cols-[1fr_180px]">
           <label className="space-y-1">
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Từ khóa</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Tìm kiếm</span>
             <input
               value={catalog.query}
               onChange={(event) => catalog.setQuery(event.target.value)}
-              placeholder="Đang lọc theo tham số URL search"
+              placeholder="Tìm theo tên bài hát, nghệ sĩ hoặc album"
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-red-300 focus:bg-white"
             />
           </label>
@@ -122,7 +105,7 @@ export default function Trending() {
           </label>
         </div>
 
-        <div className="mb-4 flex items-center justify-between gap-3 text-sm text-slate-500">
+        <div className="mt-4 mb-2 flex items-center justify-between gap-3 text-sm text-slate-500">
           <label className="flex items-center gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Sắp xếp</span>
             <select
@@ -137,11 +120,9 @@ export default function Trending() {
           </label>
         </div>
 
-        <div className="mb-4 flex items-center justify-between gap-3 text-sm text-slate-500">
+        <div className="mt-4 flex items-center justify-between gap-3 text-sm text-slate-500">
           <span>
-            {catalog.loading
-              ? 'Đang tải...'
-              : `Hiển thị ${displayedSongs.length}/${catalog.totalElements || catalog.items.length} bài hát`}
+            {catalog.loading ? 'Đang tải...' : `Hiển thị ${catalog.items.length}/${catalog.totalElements || catalog.items.length} bài hát`}
           </span>
           <button
             type="button"
@@ -153,39 +134,34 @@ export default function Trending() {
           </button>
         </div>
 
-        {catalog.error && (
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-red-600">{catalog.error}</p>
-            <button
-              type="button"
-              onClick={catalog.reload}
-              className="text-xs font-medium text-red-700 hover:text-red-800"
-            >
-              Tải lại
-            </button>
-          </div>
-        )}
+        {catalog.error && <p className="mt-3 text-sm text-red-600">{catalog.error}</p>}
 
-        <div className="space-y-2">
-          {displayedSongs.map((song) => {
+        <div className="mt-4 space-y-2">
+          {sortedSongs.map((song) => {
             const songId = song.id || song._id
             return (
               <div
                 key={songId}
-                onClick={() => setCurrentSong(song)}
-                className="group cursor-pointer flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 hover:bg-slate-100 transition"
+                className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 transition hover:bg-slate-100"
               >
-                <Music2 className="w-4 h-4 text-red-700 flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-slate-900 truncate">
-                    {song.title || song.name || song.songName || 'Untitled song'}
-                  </p>
-                  <p className="text-sm text-slate-500 truncate">
-                    {song.artist?.name || song.artist || 'Unknown artist'}
-                  </p>
-                  <p className="text-xs text-slate-400 truncate">{resolveSongListenerCount(song)} lượt nghe</p>
-                </div>
-                <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  onClick={() => setCurrentSong(song)}
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                >
+                  <Music2 className="h-4 w-4 shrink-0 text-red-700" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-slate-900">{song.title || song.name || song.songName || 'Untitled song'}</p>
+                    <p className="truncate text-sm text-slate-500">
+                      {song.artist?.name || song.artist || 'Unknown artist'}
+                    </p>
+                    <p className="truncate text-xs text-slate-400">{resolveSongListenerCount(song)} lượt nghe</p>
+                  </div>
+                </button>
+
+                <Play className="h-4 w-4 shrink-0 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100" />
+
+                <div className="opacity-0 transition-opacity group-hover:opacity-100">
                   <LikeButton
                     songId={songId}
                     initialLiked={likedSongs.has(songId)}
@@ -204,9 +180,9 @@ export default function Trending() {
             )
           })}
 
-          {!catalog.loading && !catalog.error && !displayedSongs.length && (
+          {!catalog.loading && !catalog.error && !catalog.items.length && (
             <p className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-sm text-slate-500">
-              Chưa có bài hát nào.
+              Không có bài hát nào phù hợp.
             </p>
           )}
         </div>

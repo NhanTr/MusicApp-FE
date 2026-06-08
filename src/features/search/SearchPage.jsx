@@ -5,6 +5,14 @@ import { Album, Heart, ListMusic, Music2, Play, UserRound } from 'lucide-react'
 import { useMusic } from '@/contexts/MusicContext'
 import { apiUtils, searchApi, favoritesApi } from '@/lib/api'
 import LikeButton from '@/components/LikeButton'
+import { resolveSongListenerCount } from '@/lib/song-utils'
+
+const SONG_SORT_OPTIONS = [
+  { value: 'listeners-desc', label: 'Nghe nhiều nhất' },
+  { value: 'listeners-asc', label: 'Nghe ít nhất' },
+  { value: 'title-asc', label: 'Tên A-Z' },
+  { value: 'title-desc', label: 'Tên Z-A' },
+]
 
 function normalizeSearchResults(data) {
   if (!data) {
@@ -24,6 +32,7 @@ function normalizeSearchResults(data) {
 function SongRow({ song, onPlay, isLiked, onLikeChange }) {
   const title = song.title || song.name || song.songName || 'Untitled song'
   const artistName = typeof song.artist === 'string' ? song.artist : song.artist?.name || 'Unknown artist'
+  const listenerCount = resolveSongListenerCount(song)
 
   return (
     <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 hover:bg-slate-100 transition group">
@@ -35,6 +44,7 @@ function SongRow({ song, onPlay, isLiked, onLikeChange }) {
       >
         <p className="font-medium text-slate-900 truncate">{title}</p>
         <p className="text-sm text-slate-500 truncate">{artistName}</p>
+        <p className="text-xs text-slate-400 truncate">{listenerCount} lượt nghe</p>
       </button>
       <Play className="w-4 h-4 text-slate-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -56,6 +66,7 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [likedSongs, setLikedSongs] = useState(new Set())
+  const [songSort, setSongSort] = useState('listeners-desc')
 
   // Load user's favorite songs
   useEffect(() => {
@@ -116,6 +127,29 @@ export default function SearchPage() {
     [results],
   )
 
+  const sortedSongs = useMemo(() => {
+    const items = [...results.songs]
+    items.sort((left, right) => {
+      const leftTitle = (left.title || left.name || left.songName || '').toLowerCase()
+      const rightTitle = (right.title || right.name || right.songName || '').toLowerCase()
+      const leftListenerCount = resolveSongListenerCount(left)
+      const rightListenerCount = resolveSongListenerCount(right)
+
+      switch (songSort) {
+        case 'listeners-asc':
+          return leftListenerCount - rightListenerCount
+        case 'title-asc':
+          return leftTitle.localeCompare(rightTitle)
+        case 'title-desc':
+          return rightTitle.localeCompare(leftTitle)
+        case 'listeners-desc':
+        default:
+          return rightListenerCount - leftListenerCount
+      }
+    })
+    return items
+  }, [results.songs, songSort])
+
   return (
     <div>
       <div className="mb-8">
@@ -143,12 +177,23 @@ export default function SearchPage() {
       {!!hasResults && (
         <div className="grid gap-4 xl:grid-cols-2">
           <section className="rounded-xl border bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <Music2 className="w-5 h-5 text-red-700" />
-              <h2 className="text-lg font-semibold text-slate-900">Bài hát</h2>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Music2 className="w-5 h-5 text-red-700" />
+                <h2 className="text-lg font-semibold text-slate-900">Bài hát</h2>
+              </div>
+              <select
+                value={songSort}
+                onChange={(event) => setSongSort(event.target.value)}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+              >
+                {SONG_SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
-              {results.songs.map((song) => (
+              {sortedSongs.map((song) => (
                 <SongRow 
                   key={song.id || song._id || song.title} 
                   song={song} 
@@ -175,10 +220,14 @@ export default function SearchPage() {
             </div>
             <div className="space-y-2">
               {results.artists.map((artist) => (
-                <div key={artist.id || artist._id || artist.name} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <Link
+                  key={artist.id || artist._id || artist.name}
+                  to={`/music/artists/${artist.id || artist._id}`}
+                  className="block rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition hover:border-red-200 hover:bg-red-50"
+                >
                   <p className="font-medium text-slate-900 truncate">{artist.name || artist.fullName || 'Unknown artist'}</p>
                   <p className="text-sm text-slate-500 truncate">{artist.bio || artist.description || 'Nghệ sĩ'}</p>
-                </div>
+                </Link>
               ))}
             </div>
           </section>
@@ -190,10 +239,14 @@ export default function SearchPage() {
             </div>
             <div className="space-y-2">
               {results.albums.map((album) => (
-                <div key={album.id || album._id || album.name} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <Link
+                  key={album.id || album._id || album.name}
+                  to={`/music/albums/${album.id || album._id}`}
+                  className="block rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition hover:border-red-200 hover:bg-red-50"
+                >
                   <p className="font-medium text-slate-900 truncate">{album.name || album.title || 'Untitled album'}</p>
                   <p className="text-sm text-slate-500 truncate">{album.description || album.artist?.name || 'Album'}</p>
-                </div>
+                </Link>
               ))}
             </div>
           </section>
@@ -219,7 +272,7 @@ export default function SearchPage() {
 
       {!query && (
         <div className="mt-6 text-sm text-slate-500">
-          Quay lại <Link to="/music" className="text-red-700 font-medium hover:underline">Nhạc Xu Hướng</Link> để xem bài hát đang thịnh hành.
+          Quay lại <Link to="/music/trending" className="text-red-700 font-medium hover:underline">Nhạc Xu Hướng</Link> để xem bài hát đang thịnh hành.
         </div>
       )}
     </div>

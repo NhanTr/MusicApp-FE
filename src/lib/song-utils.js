@@ -18,3 +18,8 @@ export function resolveSongArtistName(value) {
   if (typeof song.artist === 'string') return song.artist
   return song.artist?.name || 'Unknown artist'
 }
+
+export function resolveSongListenerCount(value) {
+  const song = resolveSongEntity(value)
+  return song?.listenerCount ?? 0
+}

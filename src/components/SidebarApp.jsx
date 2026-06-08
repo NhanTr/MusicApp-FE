@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Clock3, Compass, Heart, Home, LibraryBig, LogOut, Search, Upload, UserCircle2 } from 'lucide-react'
+import { Album, Clock3, Compass, Heart, Home, LibraryBig, LogOut, Music2, Search, Upload, UserCircle2, Users } from 'lucide-react'
 
 import { authApi, clearAuthTokens } from '@/lib/api'
 
@@ -82,6 +82,30 @@ function SidebarApp() {
         >
           <Compass className="w-5 h-5" />
           <span>Nhạc Xu Hướng</span>
+        </NavLink>
+
+        <NavLink
+          to="/music/songs"
+          className={navClass}
+        >
+          <Music2 className="w-5 h-5" />
+          <span>Bài Hát</span>
+        </NavLink>
+
+        <NavLink
+          to="/music/artists"
+          className={navClass}
+        >
+          <Users className="w-5 h-5" />
+          <span>Nghệ Sĩ</span>
+        </NavLink>
+
+        <NavLink
+          to="/music/albums"
+          className={navClass}
+        >
+          <Album className="w-5 h-5" />
+          <span>Album</span>
         </NavLink>
 
         <NavLink

@@ -254,7 +254,7 @@ export const authApi = {
 
 export const songsApi = {
 	getSongs: (params = {}) =>
-		fetchWithAuthJson(`/api/songs${toQueryString({ page: params.page, size: params.size, sort: params.sort })}`),
+		fetchWithAuthJson(`/api/songs${toQueryString({ page: params.page, size: params.size, sort: params.sort, q: params.q })}`),
 	getSongById: (id) => fetchWithAuthJson(`/api/songs/${id}`),
 	getTrendingSongs: (params = {}) =>
 		fetchWithAuthJson(`/api/songs/trending${toQueryString({ page: params.page, size: params.size })}`),
@@ -271,9 +271,9 @@ export const songsApi = {
 
 export const playlistsApi = {
 	getPlaylists: (params = {}) =>
-		fetchWithAuthJson(`/api/playlists${toQueryString({ page: params.page, size: params.size })}`),
+		fetchWithAuthJson(`/api/playlists${toQueryString({ page: params.page, size: params.size, q: params.q })}`),
 	getPublicPlaylists: (params = {}) =>
-		fetchWithAuthJson(`/api/playlists/public${toQueryString({ page: params.page, size: params.size })}`),
+		fetchWithAuthJson(`/api/playlists/public${toQueryString({ page: params.page, size: params.size, q: params.q })}`),
 	getPlaylistById: (id) => fetchWithAuthJson(`/api/playlists/${id}`),
 	createPlaylist: (payload) =>
 		apiJson('/api/playlists', { method: 'POST', body: payload, auth: true }),
@@ -288,7 +288,7 @@ export const playlistsApi = {
 
 export const albumsApi = {
 	getAlbums: (params = {}) =>
-		fetchWithAuthJson(`/api/albums${toQueryString({ page: params.page, size: params.size })}`),
+		fetchWithAuthJson(`/api/albums${toQueryString({ page: params.page, size: params.size, q: params.q, artistId: params.artistId })}`),
 	getAlbumById: (id) => fetchWithAuthJson(`/api/albums/${id}`),
 	createAlbum: (payload) => apiJson('/api/albums', { method: 'POST', body: payload, auth: true }),
 	updateAlbum: (id, payload) =>
@@ -298,11 +298,12 @@ export const albumsApi = {
 
 export const artistsApi = {
 	getArtists: (params = {}) =>
-		fetchWithAuthJson(`/api/artists${toQueryString({ page: params.page, size: params.size })}`),
+		fetchWithAuthJson(`/api/artists${toQueryString({ page: params.page, size: params.size, q: params.q })}`),
 	getArtistById: (id) => fetchWithAuthJson(`/api/artists/${id}`),
 	getArtistSongs: (id, params = {}) =>
 		fetchWithAuthJson(`/api/artists/${id}/songs${toQueryString({ page: params.page, size: params.size })}`),
-	getArtistAlbums: (id) => fetchWithAuthJson(`/api/artists/${id}/albums`),
+	getArtistAlbums: (id, params = {}) =>
+		fetchWithAuthJson(`/api/albums${toQueryString({ artistId: id, page: params.page, size: params.size, q: params.q })}`),
 	getArtistFollowers: (id) => fetchWithAuthJson(`/api/artists/${id}/followers`),
 	createArtist: (payload) => apiJson('/api/artists', { method: 'POST', body: payload, auth: true }),
 	updateArtist: (id, payload) =>
@@ -319,14 +320,14 @@ export const followApi = {
 
 export const favoritesApi = {
 	getFavorites: (params = {}) =>
-		fetchWithAuthJson(`/api/favorites${toQueryString({ page: params.page, size: params.size })}`),
+		fetchWithAuthJson(`/api/favorites${toQueryString({ page: params.page, size: params.size, q: params.q })}`),
 	likeSong: (songId) => apiJson(`/api/favorites/${songId}`, { method: 'POST', auth: true }),
 	unlikeSong: (songId) => apiJson(`/api/favorites/${songId}`, { method: 'DELETE', auth: true }),
 }
 
 export const historyApi = {
 	getHistory: (params = {}) =>
-		fetchWithAuthJson(`/api/history${toQueryString({ page: params.page, size: params.size })}`),
+		fetchWithAuthJson(`/api/history${toQueryString({ page: params.page, size: params.size, q: params.q })}`),
 	addHistory: (payload) => apiJson('/api/history', { method: 'POST', body: payload, auth: true }),
 	deleteHistoryById: (id) => apiJson(`/api/history/${id}`, { method: 'DELETE', auth: true }),
 	deleteAllHistory: () => apiJson('/api/history', { method: 'DELETE', auth: true }),

@@ -16,7 +16,7 @@ function InnerLayout() {
           <SidebarApp />
         </div>
 
-        <main className="flex-1 p-5 md:p-8 pb-60">
+        <main className="flex-1 p-5 md:p-8 pb-[22rem] md:pb-[24rem]">
           <Outlet />
         </main>
       </div>

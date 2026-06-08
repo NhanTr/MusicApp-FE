@@ -9,7 +9,6 @@ export default function Profile() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [updating, setUpdating] = useState(false)
@@ -56,11 +55,9 @@ export default function Profile() {
 
     try {
       await authApi.updatePassword({
-        currentPassword,
         newPassword,
         confirmNewPassword: confirmPassword,
       })
-      setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
     } catch (err) {
@@ -123,14 +120,6 @@ export default function Profile() {
               <h2 className="text-lg font-semibold text-slate-900">Đổi mật khẩu</h2>
             </div>
             <div className="space-y-3">
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Mật khẩu hiện tại"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-red-300"
-                required
-              />
               <input
                 type="password"
                 value={newPassword}

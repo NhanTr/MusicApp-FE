@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Play, Pause, SkipBack, SkipForward, Volume2, ChevronUp, ChevronDown, X } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Volume2, ChevronUp, ChevronDown, X, ListMusic, Loader2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { apiUtils, playlistsApi } from '@/lib/api'
 
 function MusicPlay({ songs = [], currentSong: activeSong, onSongChange } = {}) {
   const audioRef = useRef(null)
@@ -14,6 +15,12 @@ function MusicPlay({ songs = [], currentSong: activeSong, onSongChange } = {}) {
   const [showLyrics, setShowLyrics] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [queue, setQueue] = useState(songs)
+  const [showAddToPlaylist, setShowAddToPlaylist] = useState(false)
+  const [playlists, setPlaylists] = useState([])
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState('')
+  const [playlistsLoading, setPlaylistsLoading] = useState(false)
+  const [addingToPlaylist, setAddingToPlaylist] = useState(false)
+  const [playlistMessage, setPlaylistMessage] = useState({ type: '', text: '' })
 
   const currentSong = activeSong || queue[currentSongIndex] || songs[0]
 
@@ -36,6 +43,41 @@ function MusicPlay({ songs = [], currentSong: activeSong, onSongChange } = {}) {
       audioRef.current.volume = volume
     }
   }, [volume])
+
+  useEffect(() => {
+    if (!showAddToPlaylist) {
+      return
+    }
+
+    let isActive = true
+
+    async function loadPlaylists() {
+      setPlaylistsLoading(true)
+      setPlaylistMessage({ type: '', text: '' })
+
+      try {
+        const data = await playlistsApi.getPlaylists({ size: 100 })
+        if (!isActive) return
+
+        const items = apiUtils.extractList(data)
+        setPlaylists(items)
+        setSelectedPlaylistId((prev) => prev || items[0]?.id || items[0]?._id || '')
+      } catch (error) {
+        if (!isActive) return
+        setPlaylistMessage({ type: 'error', text: error.message || 'Không tải được danh sách playlist.' })
+      } finally {
+        if (isActive) {
+          setPlaylistsLoading(false)
+        }
+      }
+    }
+
+    loadPlaylists()
+
+    return () => {
+      isActive = false
+    }
+  }, [showAddToPlaylist])
 
   useEffect(() => {
     if (currentSong && audioRef.current) {
@@ -103,6 +145,41 @@ function MusicPlay({ songs = [], currentSong: activeSong, onSongChange } = {}) {
     if (audioRef.current) {
       setDuration(audioRef.current.duration)
     }
+  }
+
+  async function handleAddSongToPlaylist() {
+    if (!selectedPlaylistId || !currentSong) {
+      setPlaylistMessage({ type: 'error', text: 'Vui lòng chọn playlist hợp lệ.' })
+      return
+    }
+
+    const songId = currentSong.id || currentSong._id
+    if (!songId) {
+      setPlaylistMessage({ type: 'error', text: 'Không xác định được bài hát hiện tại.' })
+      return
+    }
+
+    setAddingToPlaylist(true)
+    setPlaylistMessage({ type: '', text: '' })
+
+    try {
+      await playlistsApi.addSongIntoPlaylist(selectedPlaylistId, { songId })
+      setPlaylistMessage({ type: 'success', text: 'Đã thêm bài hát vào playlist.' })
+    } catch (error) {
+      setPlaylistMessage({ type: 'error', text: error.message || 'Không thêm được bài hát vào playlist.' })
+    } finally {
+      setAddingToPlaylist(false)
+    }
+  }
+
+  function openPlaylistDialog() {
+    setPlaylistMessage({ type: '', text: '' })
+    setShowAddToPlaylist(true)
+  }
+
+  function closePlaylistDialog() {
+    setShowAddToPlaylist(false)
+    setPlaylistMessage({ type: '', text: '' })
   }
 
   function handleEnded() {
@@ -310,11 +387,112 @@ function MusicPlay({ songs = [], currentSong: activeSong, onSongChange } = {}) {
             >
               <ChevronUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
             </Button>
+
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={openPlaylistDialog}
+              className="h-6 w-6 p-0 md:h-7 md:w-7 md:p-0 text-white hover:bg-red-700"
+              title="Thêm vào playlist"
+            >
+              <ListMusic className="w-3 h-3 md:w-3.5 md:h-3.5" />
+            </Button>
           </div>
         </div>
           </>
         )}
       </div>
+
+      {showAddToPlaylist && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-600">Playlist của bạn</p>
+                <h3 className="mt-1 text-lg font-bold text-slate-900">Thêm bài hát vào playlist</h3>
+                <p className="mt-1 text-sm text-slate-500 truncate">{currentSong.title}</p>
+              </div>
+              <button
+                type="button"
+                onClick={closePlaylistDialog}
+                className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Close playlist dialog"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-slate-700" htmlFor="playlist-select">
+                Chọn playlist
+              </label>
+              <select
+                id="playlist-select"
+                value={selectedPlaylistId}
+                onChange={(e) => setSelectedPlaylistId(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-red-300"
+                disabled={playlistsLoading || !playlists.length}
+              >
+                {!playlists.length && <option value="">Không có playlist nào</option>}
+                {playlists.map((playlist) => {
+                  const playlistId = playlist.id || playlist._id
+                  return (
+                    <option key={playlistId} value={playlistId}>
+                      {playlist.name || playlist.title || 'Untitled playlist'}
+                    </option>
+                  )
+                })}
+              </select>
+
+              {playlistsLoading && (
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Đang tải playlist...
+                </div>
+              )}
+
+              {!playlistsLoading && !playlists.length && (
+                <p className="text-sm text-slate-500">Bạn chưa có playlist nào. Hãy tạo playlist trước khi thêm bài hát.</p>
+              )}
+
+              {playlistMessage.text && (
+                <p className={`text-sm ${playlistMessage.type === 'success' ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {playlistMessage.text}
+                </p>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={closePlaylistDialog}
+                  className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                >
+                  Đóng
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleAddSongToPlaylist}
+                  disabled={addingToPlaylist || playlistsLoading || !playlists.length}
+                  className="bg-red-600 text-white hover:bg-red-700"
+                >
+                  {addingToPlaylist ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Đang thêm...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Thêm vào playlist
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

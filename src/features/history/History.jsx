@@ -1,9 +1,18 @@
-import { useEffect, useState } from 'react'
-import { Clock3, Trash2, Trash } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Clock3, RefreshCw, Trash2, Trash } from 'lucide-react'
 
 import { historyApi, apiUtils, favoritesApi } from '@/lib/api'
 import { useMusic } from '@/contexts/MusicContext'
 import LikeButton from '@/components/LikeButton'
+import { resolveSongListenerCount } from '@/lib/song-utils'
+import { usePagedSearch } from '@/features/catalog/usePagedSearch'
+
+const SORT_OPTIONS = [
+  { value: 'recent', label: 'Mới nghe nhất' },
+  { value: 'oldest', label: 'Cũ nhất' },
+  { value: 'listeners-desc', label: 'Nghe nhiều nhất' },
+  { value: 'listeners-asc', label: 'Nghe ít nhất' },
+]
 
 function getHistorySong(item) {
   return item.song || item.music || item.track || item
@@ -13,20 +22,36 @@ export default function History() {
   const { setCurrentSong } = useMusic()
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState('')
   const [likedSongs, setLikedSongs] = useState(new Set())
+  const [query, setQuery] = useState('')
+  const [pageSize, setPageSize] = useState(5)
+  const [page, setPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalElements, setTotalElements] = useState(0)
+  const [sortBy, setSortBy] = useState('recent')
 
-  async function loadHistory() {
-    setLoading(true)
+  async function loadHistory(nextPage = 0, append = false) {
+    if (append) {
+      setLoadingMore(true)
+    } else {
+      setLoading(true)
+    }
     setError('')
 
     try {
-      const data = await historyApi.getHistory()
-      setHistory(apiUtils.extractList(data))
+      const data = await historyApi.getHistory({ page: nextPage, size: pageSize, q: query })
+      const items = apiUtils.extractList(data)
+      setTotalPages(data?.totalPages || data?.data?.totalPages || 0)
+      setTotalElements(data?.totalElements ?? (data?.data?.totalElements) ?? items.length)
+      setPage(nextPage)
+      setHistory((prev) => (append ? [...prev, ...items] : items))
     } catch (err) {
       setError(err.message || 'Không tải được lịch sử nghe.')
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
   }
 
@@ -50,8 +75,8 @@ export default function History() {
   }, [])
 
   useEffect(() => {
-    loadHistory()
-  }, [])
+    loadHistory(0, false)
+  }, [pageSize, query])
 
   async function handleDeleteHistory(id) {
     if (!id) return
@@ -73,12 +98,39 @@ export default function History() {
     }
   }
 
+  const displayedHistory = useMemo(() => {
+    const items = [...history]
+    items.sort((left, right) => {
+      const leftSong = getHistorySong(left)
+      const rightSong = getHistorySong(right)
+      const leftListenerCount = resolveSongListenerCount(leftSong)
+      const rightListenerCount = resolveSongListenerCount(rightSong)
+      const leftTime = new Date(left.listenedAt || 0).getTime()
+      const rightTime = new Date(right.listenedAt || 0).getTime()
+
+      switch (sortBy) {
+        case 'oldest':
+          return leftTime - rightTime
+        case 'listeners-desc':
+          return rightListenerCount - leftListenerCount
+        case 'listeners-asc':
+          return leftListenerCount - rightListenerCount
+        case 'recent':
+        default:
+          return rightTime - leftTime
+      }
+    })
+    return items
+  }, [history, sortBy])
+
+  const hasMore = totalPages > 0 ? page + 1 < totalPages : history.length < totalElements
+
   return (
     <div>
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Lịch Sử Nghe</h1>
-          <p className="text-slate-600 mt-2">Xem và quản lý các bài hát đã phát.</p>
+          <p className="text-slate-600 mt-2">Tìm, lọc và tải dần các bài hát đã phát từ dữ liệu DB.</p>
         </div>
 
         <button
@@ -91,15 +143,68 @@ export default function History() {
         </button>
       </div>
 
+      <div className="mb-4 grid gap-3 md:grid-cols-[1fr_180px_180px]">
+        <label className="space-y-1 md:col-span-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Tìm kiếm</span>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Tìm theo tên bài hát, nghệ sĩ, album"
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-red-300 focus:bg-white"
+          />
+        </label>
+
+        <label className="space-y-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Số lượng</span>
+          <input
+            type="number"
+            min="1"
+            step="1"
+            value={pageSize}
+            onChange={(event) => setPageSize(Math.max(1, Number(event.target.value) || 1))}
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-red-300 focus:bg-white"
+          />
+        </label>
+
+        <label className="space-y-1">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Sắp xếp</span>
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-red-300 focus:bg-white"
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+        <div className="mb-4 flex items-center justify-between gap-3 text-sm text-slate-500">
+        <span>
+          {loading ? 'Đang tải...' : `Hiển thị ${displayedHistory.length}/${totalElements || displayedHistory.length} mục`}
+        </span>
+        <button
+          type="button"
+          onClick={() => loadHistory(0, false)}
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Tải lại
+        </button>
+      </div>
+
       {loading && <p className="text-sm text-slate-500">Đang tải lịch sử...</p>}
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {!loading && !error && (
         <div className="space-y-2 rounded-xl border bg-white p-5 shadow-sm">
-          {history.map((item) => {
+          {displayedHistory.map((item) => {
             const song = getHistorySong(item)
             const title = song.title || song.name || song.songName || 'Untitled song'
             const artistName = typeof song.artist === 'string' ? song.artist : song.artist?.name || 'Unknown artist'
+            const listenerCount = resolveSongListenerCount(song)
+            const timeListened = new Date(item.listenedAt).toLocaleString()
 
             return (
               <div
@@ -114,7 +219,9 @@ export default function History() {
                   <Clock3 className="w-4 h-4 text-red-700 shrink-0" />
                   <div className="min-w-0">
                     <p className="font-medium text-slate-900 truncate">{title}</p>
+                    <p className="text-sm text-slate-500 truncate">{timeListened}</p>
                     <p className="text-sm text-slate-500 truncate">{artistName}</p>
+                    <p className="text-xs text-slate-400 truncate">{listenerCount} lượt nghe</p>
                   </div>
                 </button>
 
@@ -144,7 +251,18 @@ export default function History() {
             )
           })}
 
-          {!history.length && <p className="text-sm text-slate-500">Chưa có lịch sử nghe nào.</p>}
+          {!displayedHistory.length && <p className="text-sm text-slate-500">Chưa có lịch sử nghe nào.</p>}
+
+          {hasMore && (
+            <button
+              type="button"
+              onClick={() => loadHistory(page + 1, true)}
+              disabled={loadingMore}
+              className="mx-auto inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-60"
+            >
+              {loadingMore ? 'Đang tải thêm...' : 'Tải thêm'}
+            </button>
+          )}
         </div>
       )}
     </div>
