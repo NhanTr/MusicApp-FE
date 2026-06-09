@@ -1,6 +1,6 @@
 // src/pages/admin/AdminArtists.jsx
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { artistsApi } from '@/lib/api'
 import { useCatalogData } from '@/hooks/useCatalogData'
 
@@ -12,6 +12,7 @@ export default function AdminArtists() {
   const [form, setForm]         = useState({ name: '', bio: '', avatarUrl: '' })
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving]     = useState(false)
+  const [deletingId, setDeletingId] = useState('')
   const [query, setQuery]       = useState('')
 
   const visible = artists.filter(a =>
@@ -36,6 +37,23 @@ export default function AdminArtists() {
       setError(err.message || 'Thêm nghệ sĩ thất bại')
     } finally {
       setSaving(false)
+    }
+  }
+  async function handleDelete(artist) {
+    const artistId = getId(artist)
+
+    if (!confirm(`Xóa nghệ sĩ "${artist?.name}"?`)) return
+
+    setDeletingId(artistId)
+    setError('')
+
+    try {
+      await artistsApi.deleteArtist(artistId)
+      await loadData()
+    } catch (err) {
+      setError(err.message || 'Xóa nghệ sĩ thất bại')
+    } finally {
+      setDeletingId('')
     }
   }
 
@@ -75,10 +93,23 @@ export default function AdminArtists() {
       {loading ? <p className="text-sm text-slate-500">Đang tải...</p> : (
         <div className="space-y-2">
           {visible.map(artist => (
-            <div key={getId(artist)} className="rounded-xl border bg-white px-4 py-3 text-sm font-medium text-slate-800">
-              {artist?.name || 'Không tên'}
-            </div>
+       
+              <div key={getId(artist)} className="flex items-center justify-between rounded-xl border bg-white px-4 py-3 text-sm font-medium text-slate-800">
+                {artist?.name || 'Không tên'}
+                <button
+                  onClick={() => handleDelete(artist)}
+                  disabled={deletingId === getId(artist)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-red-300 px-3 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-60"
+                  >
+                <Trash2 className="h-3 w-3" />
+
+                      {deletingId === getId(artist)
+                        ? 'Đang xóa...'
+                        : 'Xóa'}
+              </button>
+              </div>
           ))}
+          
         </div>
       )}
       {error && <p className="text-sm text-red-600">{error}</p>}

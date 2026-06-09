@@ -47,7 +47,7 @@ export default function AdminLayout() {
       </header>
 
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-6 md:grid-cols-[240px_minmax(0,1fr)] md:px-6">
-        <aside className="rounded-xl border bg-white p-4 shadow-sm">
+        <aside className="sticky top-6 h-fit rounded-xl border bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-lg font-semibold">Appsibar Admin</h2>
           <nav className="flex flex-col gap-2">
             <NavLink to="/admin/artists" className={navClass}>

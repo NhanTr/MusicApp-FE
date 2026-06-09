@@ -1,6 +1,6 @@
 // src/pages/admin/AdminAlbums.jsx
 import { useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2} from 'lucide-react'
 import { albumsApi, songsApi } from '@/lib/api'
 import { useCatalogData } from '@/hooks/useCatalogData'
 

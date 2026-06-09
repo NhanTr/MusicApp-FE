@@ -1,49 +1,161 @@
 import { useState } from 'react'
-import { ListMusic, Lock, Plus, RefreshCw, Trash2, Users } from 'lucide-react'
+import { ChevronDown, ChevronUp, ListMusic, Lock, Music2, Play, Plus, RefreshCw, Trash2, Users } from 'lucide-react'
 
 import { playlistsApi } from '@/lib/api'
+import { useMusic } from '@/contexts/MusicContext'
 import { usePagedSearch } from '@/features/catalog/usePagedSearch'
 
-function PlaylistCard({ playlist, onDelete, canDelete }) {
-  return (
-    <div className="flex items-start justify-between gap-3 rounded-xl border bg-white p-4 shadow-sm">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-slate-900 truncate">{playlist.name || playlist.title || 'Untitled playlist'}</h3>
-          {playlist.public ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
-              <Users className="w-3 h-3" /> Public
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
-              <Lock className="w-3 h-3" /> Private
-            </span>
-          )}
-        </div>
-        <p className="text-sm text-slate-500 mt-1 truncate">{playlist.description || 'Chưa có mô tả'}</p>
-        <p className="text-xs text-slate-400 mt-2">{playlist.songs?.length || 0} bài hát</p>
-      </div>
+function getPlaylistSongs(playlist) {
+  if (!playlist) {
+    return []
+  }
 
-      {canDelete && (
+  if (Array.isArray(playlist.songs)) {
+    return playlist.songs
+  }
+
+  if (Array.isArray(playlist.songList)) {
+    return playlist.songList
+  }
+
+  if (Array.isArray(playlist.tracks)) {
+    return playlist.tracks
+  }
+
+  if (Array.isArray(playlist.items)) {
+    return playlist.items
+  }
+
+  if (Array.isArray(playlist.data?.songs)) {
+    return playlist.data.songs
+  }
+
+  return []
+}
+
+function PlaylistSongList({ songs, loading, error, onPlaySong }) {
+  if (loading) {
+    return <p className="text-sm text-slate-500">Đang tải bài hát trong playlist...</p>
+  }
+
+  if (error) {
+    return <p className="text-sm text-red-600">{error}</p>
+  }
+
+  if (!songs.length) {
+    return <p className="text-sm text-slate-500">Playlist này chưa có bài hát nào.</p>
+  }
+
+  return (
+    <div className="space-y-2">
+      {songs.map((song, index) => {
+        const songId = song.id || song._id || `${song.title || song.name || 'song'}-${index}`
+
+        return (
+          <button
+            key={songId}
+            type="button"
+            onClick={() => onPlaySong(song)}
+            className="group flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:bg-slate-100"
+          >
+            <Music2 className="h-4 w-4 shrink-0 text-red-700" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-slate-900">{song.title || song.name || song.songName || 'Untitled song'}</p>
+              <p className="truncate text-xs text-slate-500">{song.artist?.name || song.artist || 'Unknown artist'}</p>
+            </div>
+            <Play className="h-4 w-4 shrink-0 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100" />
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function PlaylistCard({
+  playlist,
+  onDelete,
+  canDelete,
+  isSelected,
+  onSelect,
+  selectedPlaylist,
+  songsLoading,
+  songsError,
+  onPlaySong,
+}) {
+  const songs = getPlaylistSongs(selectedPlaylist || playlist)
+
+  return (
+    <div className={`rounded-xl border bg-white p-4 shadow-sm transition ${isSelected ? 'border-red-200 ring-1 ring-red-100' : 'border-slate-200'}`}>
+      <div className="flex items-start justify-between gap-3">
         <button
           type="button"
-          onClick={() => onDelete(playlist.id || playlist._id)}
-          className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-sm text-red-700 hover:bg-red-50"
+          onClick={() => onSelect(playlist)}
+          className="min-w-0 flex-1 text-left"
         >
-          <Trash2 className="w-4 h-4" />
-          Xóa
+          <div className="flex items-center gap-2">
+            <h3 className="truncate font-semibold text-slate-900">{playlist.name || playlist.title || 'Untitled playlist'}</h3>
+            {playlist.public ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                <Users className="w-3 h-3" /> Public
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                <Lock className="w-3 h-3" /> Private
+              </span>
+            )}
+          </div>
+          <p className="mt-1 truncate text-sm text-slate-500">{playlist.description || 'Chưa có mô tả'}</p>
+          <p className="mt-2 text-xs text-slate-400">{getPlaylistSongs(playlist).length} bài hát</p>
         </button>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onSelect(playlist)}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            {isSelected ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {isSelected ? 'Ẩn' : 'Xem'}
+          </button>
+
+          {canDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(playlist.id || playlist._id)}
+              className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-sm text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="w-4 h-4" />
+              Xóa
+            </button>
+          )}
+        </div>
+      </div>
+
+      {isSelected && (
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <PlaylistSongList
+            songs={songs}
+            loading={songsLoading}
+            error={songsError}
+            onPlaySong={onPlaySong}
+          />
+        </div>
       )}
     </div>
   )
 }
 
 export default function Playlists() {
+  const { setCurrentSong } = useMusic()
   const [activeTab, setActiveTab] = useState('mine')
   const [name, setName] = useState('')
   const [isPublic, setIsPublic] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [actionError, setActionError] = useState('')
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState('')
+  const [selectedPlaylist, setSelectedPlaylist] = useState(null)
+  const [songsLoading, setSongsLoading] = useState(false)
+  const [songsError, setSongsError] = useState('')
 
   const catalog = usePagedSearch(
     async ({ query, page, size }) => {
@@ -55,6 +167,35 @@ export default function Playlists() {
     },
     { initialSize: 5, dependencies: [activeTab] },
   )
+
+  async function handleSelectPlaylist(playlist) {
+    const playlistId = playlist.id || playlist._id
+
+    if (!playlistId) {
+      return
+    }
+
+    if (selectedPlaylistId === playlistId) {
+      setSelectedPlaylistId('')
+      setSelectedPlaylist(null)
+      setSongsError('')
+      return
+    }
+
+    setSelectedPlaylistId(playlistId)
+    setSelectedPlaylist(playlist)
+    setSongsError('')
+    setSongsLoading(true)
+
+    try {
+      const detail = await playlistsApi.getPlaylistById(playlistId)
+      setSelectedPlaylist(detail || playlist)
+    } catch (err) {
+      setSongsError(err.message || 'Không tải được bài hát trong playlist.')
+    } finally {
+      setSongsLoading(false)
+    }
+  }
 
   async function handleCreatePlaylist(e) {
     e.preventDefault()
@@ -70,6 +211,8 @@ export default function Playlists() {
       await playlistsApi.createPlaylist({ name: name.trim(), isPublic })
       setName('')
       setIsPublic(false)
+      setSelectedPlaylistId('')
+      setSelectedPlaylist(null)
       catalog.reload()
     } catch (err) {
       setActionError(err.message || 'Không tạo được playlist.')
@@ -87,6 +230,11 @@ export default function Playlists() {
 
     try {
       await playlistsApi.deletePlaylist(id)
+      if (selectedPlaylistId === id) {
+        setSelectedPlaylistId('')
+        setSelectedPlaylist(null)
+        setSongsError('')
+      }
       catalog.reload()
     } catch (err) {
       setActionError(err.message || 'Không xóa được playlist.')
@@ -203,6 +351,12 @@ export default function Playlists() {
               playlist={playlist}
               onDelete={handleDeletePlaylist}
               canDelete={activeTab === 'mine'}
+              isSelected={(playlist.id || playlist._id) === selectedPlaylistId}
+              onSelect={handleSelectPlaylist}
+              selectedPlaylist={(playlist.id || playlist._id) === selectedPlaylistId ? selectedPlaylist : null}
+              songsLoading={(playlist.id || playlist._id) === selectedPlaylistId && songsLoading}
+              songsError={(playlist.id || playlist._id) === selectedPlaylistId ? songsError : ''}
+              onPlaySong={setCurrentSong}
             />
           ))}
 
