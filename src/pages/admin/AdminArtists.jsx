@@ -1,5 +1,4 @@
 
-import { useCatalogData } from '@/hooks/useCatalogData'
 import { useEffect, useMemo, useState } from 'react'
 import { Edit, Plus, Search, Trash2} from 'lucide-react'
 import { toast } from 'sonner'
@@ -29,6 +28,7 @@ export default function AdminArtists() {
   const [showForm, setShowForm] = useState(false)
 
   const [saving, setSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState('')
   const [editingArtist, setEditingArtist] = useState(null)
   const [editForm, setEditForm] = useState(emptyForm)
 
@@ -100,7 +100,7 @@ export default function AdminArtists() {
 
     try {
       await artistsApi.deleteArtist(artistId)
-      await loadData()
+      await loadArtists()
     } catch (err) {
       setError(err.message || 'Xóa nghệ sĩ thất bại')
     } finally {
@@ -183,9 +183,14 @@ export default function AdminArtists() {
                   <p className="text-sm font-medium text-slate-800">{artist?.name || 'Khong ten'}</p>
                   <p className="line-clamp-1 text-xs text-slate-500">{artist?.bio || 'Chua co tieu su'}</p>
                 </div>
-                <button onClick={() => openEdit(artist)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs text-slate-700 hover:bg-slate-50">
-                  <Edit className="h-3 w-3" /> Edit
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => openEdit(artist)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs text-slate-700 hover:bg-slate-50">
+                    <Edit className="h-3 w-3" /> Edit
+                  </button>
+                  <button onClick={() => handleDelete(artist)} disabled={deletingId === getId(artist)} className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50">
+                    <Trash2 className="h-3 w-3" /> {deletingId === getId(artist) ? 'Dang xoa...' : 'Xoa'}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

@@ -5,7 +5,6 @@ import { historyApi, apiUtils, favoritesApi } from '@/lib/api'
 import { useMusic } from '@/contexts/MusicContext'
 import LikeButton from '@/components/LikeButton'
 import { resolveSongListenerCount } from '@/lib/song-utils'
-import { usePagedSearch } from '@/features/catalog/usePagedSearch'
 
 const SORT_OPTIONS = [
   { value: 'recent', label: 'Mới nghe nhất' },

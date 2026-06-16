@@ -3,13 +3,31 @@ import { useEffect, useMemo, useState } from 'react'
 import { KeyRound, Plus, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { adminApi, apiUtils } from '@/lib/api'
+import { adminApi, apiUtils, authApi } from '@/lib/api'
 
 const PAGE_SIZE = 10
 const emptyCreateForm = { username: '', email: '', password: '' }
 
 function getId(item) {
   return item?.id || item?._id
+}
+
+function normalizeValue(value) {
+  return String(value ?? '').trim().toLowerCase()
+}
+
+function isSameUser(left, right) {
+  const leftId = normalizeValue(getId(left))
+  const rightId = normalizeValue(getId(right))
+  if (leftId && rightId && leftId === rightId) return true
+
+  const leftEmail = normalizeValue(left?.email)
+  const rightEmail = normalizeValue(right?.email)
+  if (leftEmail && rightEmail && leftEmail === rightEmail) return true
+
+  const leftUsername = normalizeValue(left?.username)
+  const rightUsername = normalizeValue(right?.username)
+  return Boolean(leftUsername && rightUsername && leftUsername === rightUsername)
 }
 
 function getTotalPages(data, itemsLength) {
@@ -30,6 +48,7 @@ export default function AdminAdmins() {
   const [deletingId, setDeletingId] = useState('')
   const [passwordAdmin, setPasswordAdmin] = useState(null)
   const [passwordForm, setPasswordForm] = useState({ password: '', confirmPassword: '' })
+  const [currentUser, setCurrentUser] = useState(null)
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -64,6 +83,29 @@ export default function AdminAdmins() {
     loadAdmins()
   }, [page, debouncedQuery])
 
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadCurrentUser() {
+      try {
+        const profile = await authApi.me()
+        if (isMounted) {
+          setCurrentUser(profile)
+        }
+      } catch {
+        if (isMounted) {
+          setCurrentUser(null)
+        }
+      }
+    }
+
+    loadCurrentUser()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   async function submitAdmin(e) {
     e.preventDefault()
     setSaving(true)
@@ -90,6 +132,12 @@ export default function AdminAdmins() {
 
   async function handleDelete(admin) {
     const adminId = getId(admin)
+    
+    if (isSameUser(admin, currentUser)) {
+      toast.error('Khong the xoa tai khoan admin dang dang nhap.')
+      return
+    }
+    
     if (!confirm(`Xoa admin "${admin?.username || admin?.email}"?`)) return
     setDeletingId(adminId)
     setError('')

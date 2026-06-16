@@ -5,7 +5,7 @@ import { favoritesApi } from '@/lib/api'
 export default function LikeButton({ songId, initialLiked = false, onLikeChange }) {
   const [isLiked, setIsLiked] = useState(initialLiked)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [_error, setError] = useState('')
 
   // Update local state when initialLiked prop changes
   useEffect(() => {
