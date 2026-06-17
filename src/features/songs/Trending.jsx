@@ -7,7 +7,6 @@ import LikeButton from '@/components/LikeButton'
 import { apiUtils, favoritesApi, songsApi } from '@/lib/api'
 import { usePagedSearch } from '@/features/catalog/usePagedSearch'
 import { resolveSongListenerCount } from '@/lib/song-utils'
-import { useCatalogData } from '@/hooks/useCatalogData'
 
 const SORT_OPTIONS = [
   { value: 'listeners-desc', label: 'Nghe nhiều nhất' },

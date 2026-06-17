@@ -43,7 +43,7 @@ function LoginPage() {
                 const isAdmin = String(roleStr).toLowerCase().includes('admin') || rolesArr.some(r => String(r).toLowerCase().includes('admin'))
 
                 window.location.href = isAdmin ? '/admin' : '/music'
-            } catch (err) {
+            } catch (_err) {
                 // If fetching profile fails, fallback to regular dashboard
                 window.location.href = '/music'
             }
@@ -95,7 +95,7 @@ function LoginPage() {
                 const isAdmin = String(roleStr).toLowerCase().includes('admin') || rolesArr.some(r => String(r).toLowerCase().includes('admin'))
 
                 window.location.href = isAdmin ? '/admin' : '/music'
-            } catch (err) {
+            } catch (_err) {
                 window.location.href = '/music'
             }
         } catch (err) {

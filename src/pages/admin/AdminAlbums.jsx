@@ -2,7 +2,6 @@
 // src/pages/admin/AdminAlbums.jsx
 import { useState, useEffect, useMemo } from 'react'
 import { Plus, Trash2, Search, Edit} from 'lucide-react'
-import { useCatalogData } from '@/hooks/useCatalogData'
 import { albumsApi, apiUtils, artistsApi} from '@/lib/api'
 import { toast } from 'sonner'
 

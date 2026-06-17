@@ -30,7 +30,7 @@ function AppHeader({ showActions = false }) {
         const rolesArr = Array.isArray(me?.roles) ? me.roles : []
         const admin = String(roleStr).toLowerCase().includes('admin') || rolesArr.some(r => String(r).toLowerCase().includes('admin'))
         setIsAdmin(Boolean(admin))
-      } catch (err) {
+      } catch (_err) {
         // ignore
       }
     })()

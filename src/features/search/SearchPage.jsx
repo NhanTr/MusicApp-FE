@@ -153,7 +153,8 @@ export default function SearchPage() {
     return () => {
       isMounted = false
     }
-  }, [normalizedQuery])
+
+  }, [query, normalizedQuery])
 
   const hasResults = useMemo(
     () => results.songs.length || results.artists.length || results.albums.length || results.playlists.length,

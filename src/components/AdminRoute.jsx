@@ -28,7 +28,7 @@ export default function AdminRoute() {
         const isAdmin = String(roleStr).toLowerCase().includes('admin') || rolesArr.some(r => String(r).toLowerCase().includes('admin'))
 
         setAllowed(Boolean(isAdmin))
-      } catch (err) {
+      } catch (_err) {
         if (!mounted) return
         setAllowed(false)
       }
