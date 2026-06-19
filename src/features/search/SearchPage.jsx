@@ -19,82 +19,23 @@ function normalizeSearchResults(data) {
     return { songs: [], artists: [], albums: [], playlists: [] }
   }
 
+  // Axios thường bọc dữ liệu trong data.data, lấy ra payload thực tế từ Spring Boot
   const payload = data?.data || data
 
+  // Sử dụng trực tiếp mảng trả về từ SearchResponse của Backend
   return {
-    songs: apiUtils.extractList(payload?.songs),
-    artists: apiUtils.extractList(payload?.artists),
-    albums: apiUtils.extractList(payload?.albums),
-    playlists: apiUtils.extractList(payload?.playlists),
+    songs: Array.isArray(payload?.songs) ? payload.songs : apiUtils.extractList(payload?.songs),
+    artists: Array.isArray(payload?.artists) ? payload.artists : apiUtils.extractList(payload?.artists),
+    albums: Array.isArray(payload?.albums) ? payload.albums : apiUtils.extractList(payload?.albums),
+    playlists: Array.isArray(payload?.playlists) ? payload.playlists : apiUtils.extractList(payload?.playlists),
   }
-}
-
-function normalizeSearchText(value) {
-  return String(value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
-    .trim()
-}
-
-function itemMatchesQuery(item, query, fields) {
-  if (!query) return true
-
-  return fields.some((field) => {
-    const value = field.split('.').reduce((current, key) => current?.[key], item)
-    if (Array.isArray(value)) {
-      return value.some((entry) => normalizeSearchText(entry?.name || entry?.title || entry).includes(query))
-    }
-
-    return normalizeSearchText(value).includes(query)
-  })
-}
-
-function filterSearchResults(results, query) {
-  return {
-    songs: results.songs.filter((song) => itemMatchesQuery(song, query, ['title', 'name', 'songName', 'artist', 'artist.name', 'album', 'album.name', 'album.title'])),
-    artists: results.artists.filter((artist) => itemMatchesQuery(artist, query, ['name', 'fullName', 'bio', 'description'])),
-    albums: results.albums.filter((album) => itemMatchesQuery(album, query, ['name', 'title', 'description', 'artist', 'artist.name'])),
-    playlists: results.playlists.filter((playlist) => itemMatchesQuery(playlist, query, ['name', 'title', 'description'])),
-  }
-}
-
-function SongRow({ song, onPlay, isLiked, onLikeChange }) {
-  const title = song.title || song.name || song.songName || 'Untitled song'
-  const artistName = typeof song.artist === 'string' ? song.artist : song.artist?.name || 'Unknown artist'
-  const listenerCount = resolveSongListenerCount(song)
-
-  return (
-    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 hover:bg-slate-100 transition group">
-      <Music2 className="w-4 h-4 text-red-700 shrink-0" />
-      <button
-        type="button"
-        onClick={() => onPlay(song)}
-        className="min-w-0 flex-1 text-left"
-      >
-        <p className="font-medium text-slate-900 truncate">{title}</p>
-        <p className="text-sm text-slate-500 truncate">{artistName}</p>
-        <p className="text-xs text-slate-400 truncate">{listenerCount} lượt nghe</p>
-      </button>
-      <Play className="w-4 h-4 text-slate-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-        <LikeButton
-          songId={song.id || song._id}
-          initialLiked={isLiked}
-          onLikeChange={onLikeChange}
-        />
-      </div>
-    </div>
-  )
 }
 
 export default function SearchPage() {
   const { setCurrentSong } = useMusic()
   const [searchParams] = useSearchParams()
   const query = searchParams.get('q')?.trim() || ''
-  const normalizedQuery = useMemo(() => normalizeSearchText(query), [query])
+  
   const [results, setResults] = useState({ songs: [], artists: [], albums: [], playlists: [] })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -116,15 +57,15 @@ export default function SearchPage() {
         console.error('Error loading favorites:', err)
       }
     }
-
     loadFavorites()
   }, [])
 
+  // Hàm useEffect tìm kiếm kết hợp Debounce và truyền đủ tham số cho Spring Boot
   useEffect(() => {
     let isMounted = true
 
     async function loadResults() {
-      if (!normalizedQuery) {
+      if (!query || query.trim() === '') {
         setResults({ songs: [], artists: [], albums: [], playlists: [] })
         setLoading(false)
         setError('')
@@ -135,9 +76,12 @@ export default function SearchPage() {
       setError('')
 
       try {
-        const data = await searchApi.search(normalizedQuery)
+        
+        const data = await searchApi.search(query, { page: 0, size: 20 })
+        console.log('Search result:', JSON.stringify(data)) 
+        
         if (!isMounted) return
-        setResults(filterSearchResults(normalizeSearchResults(data), normalizedQuery))
+        setResults(normalizeSearchResults(data))
       } catch (err) {
         if (!isMounted) return
         setError(err.message || 'Không tìm thấy kết quả phù hợp.')
@@ -148,13 +92,15 @@ export default function SearchPage() {
       }
     }
 
-    loadResults()
+    const timer = setTimeout(() => {
+      loadResults()
+    }, 400)
 
     return () => {
       isMounted = false
+      clearTimeout(timer)
     }
-
-  }, [query, normalizedQuery])
+  }, [query])
 
   const hasResults = useMemo(
     () => results.songs.length || results.artists.length || results.albums.length || results.playlists.length,
@@ -164,8 +110,8 @@ export default function SearchPage() {
   const sortedSongs = useMemo(() => {
     const items = [...results.songs]
     items.sort((left, right) => {
-      const leftTitle = normalizeSearchText(left.title || left.name || left.songName || '')
-      const rightTitle = normalizeSearchText(right.title || right.name || right.songName || '')
+      const leftTitle = (left.title || left.name || left.songName || '').toLowerCase()
+      const rightTitle = (right.title || right.name || right.songName || '').toLowerCase()
       const leftListenerCount = resolveSongListenerCount(left)
       const rightListenerCount = resolveSongListenerCount(right)
 
@@ -228,21 +174,31 @@ export default function SearchPage() {
             </div>
             <div className="space-y-2">
               {sortedSongs.map((song) => (
-                <SongRow 
-                  key={song.id || song._id || song.title} 
-                  song={song} 
-                  onPlay={setCurrentSong}
-                  isLiked={likedSongs.has(song.id || song._id)}
-                  onLikeChange={(isLiked) => {
-                    const newLikedSongs = new Set(likedSongs)
-                    if (isLiked) {
-                      newLikedSongs.add(song.id || song._id)
-                    } else {
-                      newLikedSongs.delete(song.id || song._id)
-                    }
-                    setLikedSongs(newLikedSongs)
-                  }}
-                />
+                <div key={song.id || song._id || song.title} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 hover:bg-slate-100 transition group">
+                  <Music2 className="w-4 h-4 text-red-700 shrink-0" />
+                  <button
+                    type="button"
+                    onClick={() => setCurrentSong(song)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <p className="font-medium text-slate-900 truncate">{song.title || song.name || 'Untitled song'}</p>
+                    <p className="text-sm text-slate-500 truncate">{typeof song.artist === 'string' ? song.artist : song.artist?.name || 'Unknown artist'}</p>
+                    <p className="text-xs text-slate-400 truncate">{resolveSongListenerCount(song)} lượt nghe</p>
+                  </button>
+                  <Play className="w-4 h-4 text-slate-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <LikeButton
+                      songId={song.id || song._id}
+                      initialLiked={likedSongs.has(song.id || song._id)}
+                      onLikeChange={(isLiked) => {
+                        const newLikedSongs = new Set(likedSongs)
+                        if (isLiked) newLikedSongs.add(song.id || song._id)
+                        else newLikedSongs.delete(song.id || song._id)
+                        setLikedSongs(newLikedSongs)
+                      }}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
           </section>
@@ -255,12 +211,12 @@ export default function SearchPage() {
             <div className="space-y-2">
               {results.artists.map((artist) => (
                 <Link
-                  key={artist.id || artist._id || artist.name}
-                  to={`/music/artists/${artist.id || artist._id}`}
+                  key={artist.id || artist.name}
+                  to={`/music/artists/${artist.id}`}
                   className="block rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition hover:border-red-200 hover:bg-red-50"
                 >
-                  <p className="font-medium text-slate-900 truncate">{artist.name || artist.fullName || 'Unknown artist'}</p>
-                  <p className="text-sm text-slate-500 truncate">{artist.bio || artist.description || 'Nghệ sĩ'}</p>
+                  <p className="font-medium text-slate-900 truncate">{artist.name || 'Unknown artist'}</p>
+                  <p className="text-sm text-slate-500 truncate">Nghệ sĩ</p>
                 </Link>
               ))}
             </div>
@@ -274,12 +230,12 @@ export default function SearchPage() {
             <div className="space-y-2">
               {results.albums.map((album) => (
                 <Link
-                  key={album.id || album._id || album.name}
-                  to={`/music/albums/${album.id || album._id}`}
+                  key={album.id || album.name}
+                  to={`/music/albums/${album.id}`}
                   className="block rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition hover:border-red-200 hover:bg-red-50"
                 >
-                  <p className="font-medium text-slate-900 truncate">{album.name || album.title || 'Untitled album'}</p>
-                  <p className="text-sm text-slate-500 truncate">{album.description || album.artist?.name || 'Album'}</p>
+                  <p className="font-medium text-slate-900 truncate">{album.name || 'Untitled album'}</p>
+                  <p className="text-sm text-slate-500 truncate">Album</p>
                 </Link>
               ))}
             </div>
@@ -292,11 +248,9 @@ export default function SearchPage() {
             </div>
             <div className="space-y-2">
               {results.playlists.map((playlist) => (
-                <div key={playlist.id || playlist._id || playlist.name} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                  <p className="font-medium text-slate-900 truncate">{playlist.name || playlist.title || 'Untitled playlist'}</p>
-                  <p className="text-sm text-slate-500 truncate">
-                    {playlist.description || `${playlist.songs?.length || 0} bài hát`}
-                  </p>
+                <div key={playlist.id || playlist.name} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                  <p className="font-medium text-slate-900 truncate">{playlist.name || 'Untitled playlist'}</p>
+                  <p className="text-sm text-slate-500 truncate">Playlist công khai</p>
                 </div>
               ))}
             </div>
