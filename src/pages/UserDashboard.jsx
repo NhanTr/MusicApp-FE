@@ -176,23 +176,38 @@ function UserDashboard() {
 	}
 
 	return (
-		<div className="space-y-8 pb-60">
-			<section className="overflow-hidden rounded-3xl border border-red-100 bg-gradient-to-br from-red-700 via-red-700 to-slate-950 p-6 text-white shadow-xl md:p-8">
+		<div className="space-y-5 pb-24 sm:space-y-6 md:space-y-8 md:pb-40">
+			<section
+				className="
+				overflow-hidden
+				rounded-2xl md:rounded-3xl
+				border border-red-100
+				bg-linear-to-br
+				from-red-700
+				via-red-700
+				to-slate-950
+				p-4
+				sm:p-5
+				md:p-8
+				text-white
+				shadow-xl
+				"
+			>
 				<div className="max-w-3xl space-y-5">
 					<div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-red-50">
 						<Mic2 className="h-4 w-4" />
 						MusicFlow Studio
 					</div>
 					<div>
-						<h1 className="text-3xl font-bold leading-tight md:text-5xl">
+						<h1 className="text-2xl font-bold sm:text-3x1 leading-tight md:text-5xl">
 							Xin chào{profile?.username ? `, ${profile.username}` : ''}.
 						</h1>
-						<p className="mt-3 max-w-2xl text-sm text-red-50/90 md:text-base">
+						<p className="mt-2 max-w-2xl text-xs sm:text-sm text-red-50/90 md:text-base">
 							Quản lý bài hát, playlist, yêu thích và lịch sử nghe trong một không gian giống ứng dụng thực tế: nhanh, trực quan và có dữ liệu thật từ backend.
 						</p>
 					</div>
 
-					<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
 						{stats.map((stat) => {
 							const StatIcon = stat.icon
 							return (
@@ -213,12 +228,29 @@ function UserDashboard() {
 			</section>
 
 			{error && (
-				<div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 shadow-sm">
+				<div
+					className="
+					rounded-xl
+					md:rounded-2xl
+					p-3
+					sm:p-4
+					border
+					border-white/15
+					bg-white/10
+					"
+				>
 					{error}
 				</div>
 			)}
 
-			<div className="grid gap-4 xl:grid-cols-[1.5fr_0.9fr]">
+			<div
+				className="
+				grid
+				grid-cols-1
+				gap-4
+				xl:grid-cols-[1.5fr_0.9fr]
+				"
+			>
 				<section className="rounded-3xl border bg-white p-5 shadow-sm md:p-6">
 					<div className="mb-4 flex items-center justify-between gap-3">
 						<div>
@@ -241,9 +273,9 @@ function UserDashboard() {
 									type="button"
 									key={resolveSongId(song) || resolveSongTitle(song)}
 									onClick={() => setCurrentSong(song)}
-									className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-left transition hover:border-red-200 hover:bg-red-50"
+									className="flex w-full-center gap-2 sm:gap-3 rounded-xl md:rounded-2xl px-3 py-2.5"
 								>
-									<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 text-white shadow-sm">
+									<div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-red-600 text-white shadow-sm">
 										<Music2 className="h-4 w-4" />
 									</div>
 									<div className="min-w-0 flex-1">
