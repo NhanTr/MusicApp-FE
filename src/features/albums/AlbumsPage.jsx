@@ -20,7 +20,7 @@ export default function AlbumsPage() {
           Albums
         </div>
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Album</h1>
-        <p className="text-slate-600">Tìm album theo tên hoặc nghệ sĩ và tải tiếp theo từng trang.</p>
+        
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

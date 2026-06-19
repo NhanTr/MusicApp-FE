@@ -23,7 +23,6 @@ export default function ArtistsPage() {
           Artists
         </div>
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Nghệ sĩ</h1>
-        <p className="text-slate-600">Tìm nghệ sĩ ngay khi gõ, rồi kéo thêm dữ liệu theo từng lô.</p>
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
