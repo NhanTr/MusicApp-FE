@@ -188,37 +188,6 @@ export default function SearchPage() {
               ))}
             </div>
           </section>
-
-          <section className="rounded-xl border bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <Album className="w-5 h-5 text-red-700" />
-              <h2 className="text-lg font-semibold text-slate-900">Album</h2>
-            </div>
-            <div className="space-y-2">
-              {results.albums.map((album) => (
-                <Link key={album.id || album.name} to={`/music/albums/${album.id}`}
-                  className="block rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition hover:border-red-200 hover:bg-red-50">
-                  <p className="font-medium text-slate-900 truncate">{album.name || 'Untitled album'}</p>
-                  <p className="text-sm text-slate-500 truncate">Album</p>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-xl border bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <ListMusic className="w-5 h-5 text-red-700" />
-              <h2 className="text-lg font-semibold text-slate-900">Playlist</h2>
-            </div>
-            <div className="space-y-2">
-              {results.playlists.map((playlist) => (
-                <div key={playlist.id || playlist.name} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                  <p className="font-medium text-slate-900 truncate">{playlist.name || 'Untitled playlist'}</p>
-                  <p className="text-sm text-slate-500 truncate">Playlist công khai</p>
-                </div>
-              ))}
-            </div>
-          </section>
         </div>
       )}
 

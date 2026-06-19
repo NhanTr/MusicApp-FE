@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Play, Pause, SkipBack, SkipForward, Volume2, ChevronUp, ChevronDown, X, ListMusic, Loader2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { apiUtils, playlistsApi } from '@/lib/api'
+import { useListenTracker } from '@/hooks/useListenTracker'
 
 function MusicPlay({ songs = [], currentSong: activeSong, onSongChange } = {}) {
   const audioRef = useRef(null)
@@ -33,6 +34,12 @@ function MusicPlay({ songs = [], currentSong: activeSong, onSongChange } = {}) {
       window.clearTimeout(timeoutId)
     }
   }, [songs])
+
+  useListenTracker(
+		audioRef,
+		currentSong
+	)
+
 
   useEffect(() => {
     if (!activeSong) {
@@ -241,26 +248,6 @@ function MusicPlay({ songs = [], currentSong: activeSong, onSongChange } = {}) {
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
       />
-
-      {/* Lyrics Panel */}
-      {showLyrics && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-3">
-          <div className="bg-white rounded-xl max-w-xl w-full max-h-80 overflow-y-auto p-4 relative">
-            <button
-              onClick={() => setShowLyrics(false)}
-              className="absolute top-3 right-3 p-1 hover:bg-gray-100 rounded"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <h3 className="text-xl font-bold mb-1 text-red-700">{currentSong.title}</h3>
-            <p className="text-sm text-gray-600 mb-4">{getArtistName(currentSong)}</p>
-            <div className="whitespace-pre-line text-sm text-gray-700 leading-relaxed">
-              {currentSong.lyrics || 'Không có lời bài hát'}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Player Bar */}
       <div className="fixed bottom-2 left-6 right-2 md:bottom-3 md:left-[calc(16rem+3rem)] md:right-10 xl:left-[calc(16rem+3.5rem)] xl:right-14 bg-gradient-to-t from-red-800 to-red-700 text-white shadow-xl z-40 rounded-lg md:rounded-xl">
         {/* Minimized View */}
@@ -385,17 +372,6 @@ function MusicPlay({ songs = [], currentSong: activeSong, onSongChange } = {}) {
                 className="flex-1 h-0.5 bg-red-600 rounded-full appearance-none cursor-pointer accent-red-200"
               />
             </div>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setShowLyrics(!showLyrics)}
-              className={`h-6 w-6 p-0 md:h-7 md:w-7 md:p-0 text-white hover:bg-red-700 ${showLyrics ? 'bg-red-700' : ''}`}
-              title="Show Lyrics"
-            >
-              <ChevronUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
-            </Button>
-
             <Button
               size="sm"
               variant="ghost"
