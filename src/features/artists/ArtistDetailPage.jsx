@@ -43,14 +43,14 @@ function ArtistBanner({ artist }) {
               <p className="text-xs uppercase tracking-[0.18em] text-red-50/80">Bài hát</p>
               <p className="mt-2 text-2xl font-semibold">{artist?.songCount || 0}</p>
             </div>
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+            {/* <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
               <p className="text-xs uppercase tracking-[0.18em] text-red-50/80">Người theo dõi</p>
               <p className="mt-2 text-2xl font-semibold">{artist?.followerCount || 0}</p>
-            </div>
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+            </div> */}
+            {/* <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
               <p className="text-xs uppercase tracking-[0.18em] text-red-50/80">Trạng thái</p>
               <p className="mt-2 text-2xl font-semibold">{artist?.isFollowing ? 'Đang theo dõi' : 'Khám phá'}</p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

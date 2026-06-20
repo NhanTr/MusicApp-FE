@@ -253,7 +253,7 @@ export default function AdminAccounts() {
                       </button>
                     </th>
                   ))}
-                  <th className="px-3 py-3 text-right">Hanh dong</th>
+                  
                 </tr>
               </thead>
               <tbody>
