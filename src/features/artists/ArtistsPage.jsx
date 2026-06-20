@@ -96,7 +96,6 @@ export default function ArtistsPage() {
 
                 <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
                   <span>{artist.songCount || 0} bài hát</span>
-                  <span>{artist.followerCount || 0} người theo dõi</span>
                 </div>
                 <p className="mt-3 text-xs font-medium text-red-700 opacity-0 transition group-hover:opacity-100">
                   Xem chi tiết nghệ sĩ

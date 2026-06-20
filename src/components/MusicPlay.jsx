@@ -360,7 +360,7 @@ function MusicPlay({ songs = [], currentSong: activeSong, onSongChange } = {}) {
 
           {/* Volume & Lyrics */}
           <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
-            <div className="flex items-center gap-1 w-12 sm:w-16 md:w-20 lg:w-24 xl:w-28">
+            <div className="flex items-center gap-1 w-10 sm:w-12 md:w-14 lg:w-16 xl:w-20">
               <Volume2 className="w-3 h-3 md:w-3.5 md:h-3.5" />
               <input
                 type="range"
@@ -369,7 +369,7 @@ function MusicPlay({ songs = [], currentSong: activeSong, onSongChange } = {}) {
                 step="0.1"
                 value={volume}
                 onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="flex-1 h-0.5 bg-red-600 rounded-full appearance-none cursor-pointer accent-red-200"
+                className="w-20 h-0.5 bg-red-600 rounded-full appearance-none cursor-pointer accent-red-200"
               />
             </div>
             <Button
