@@ -95,7 +95,7 @@ export default function Favorites() {
     <div>
       <div className="mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Yêu Thích</h1>
-        <p className="text-slate-600 mt-2">Tìm và lọc các bài hát đã thích theo dữ liệu DB.</p>
+        
       </div>
 
       <div className="mb-4 grid gap-3 md:grid-cols-[1fr_180px_180px]">

@@ -77,7 +77,7 @@ export default function SongsPage() {
           Songs
         </div>
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Bài hát</h1>
-        <p className="text-slate-600">Gõ tìm kiếm để gọi API ngay, chọn số lượng và tải thêm theo lô.</p>
+        <p className="text-slate-600"></p>
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

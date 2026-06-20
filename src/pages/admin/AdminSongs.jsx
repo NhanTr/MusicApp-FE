@@ -20,7 +20,7 @@ function getTotalPages(data, itemsLength) {
 }
 
 const emptyCreateForm = { artistId: '', albumId: '', title: '', duration: 180, fileSound: null, fileImage: null }
-const emptyEditForm = { artistId: '', albumId: '', title: '' }
+const emptyEditForm = { artistId: '', albumId: '', title: '', duration: 180, fileUrl: ''}
 
 export default function AdminSongs() {
   const [artists, setArtists] = useState([])
@@ -121,33 +121,74 @@ export default function AdminSongs() {
   }
 
   function openEdit(song) {
+    console.log('EDIT SONG:', song)
+
     setEditingSong(song)
+
     setEditForm({
+      title: song?.title || '',
       artistId: getId(song?.artist) || song?.artistId || '',
       albumId: getId(song?.album) || song?.albumId || '',
-      title: song?.title || '',
+      duration: song?.duration || 180,
+
+      fileUrl:
+        song?.fileUrl ||
+        song?.audioUrl ||
+        song?.musicUrl ||
+        song?.url ||
+        '',
     })
   }
 
   async function submitEdit(e) {
     e.preventDefault()
-    if (!editingSong || !editForm.artistId || !editForm.title.trim()) return
+
+    if (!editingSong || !editForm.artistId || !editForm.title.trim()) {
+      return
+    }
+
     setSaving(true)
     setError('')
+
     try {
-      await songsApi.updateSong(getId(editingSong), {
+      const payload = {
         title: editForm.title.trim(),
         artistId: editForm.artistId,
-        albumId: editForm.albumId || null,
-      })
+        duration: Number(editForm.duration) || 180,
+        fileUrl: editForm.fileUrl,
+      }
+
+      if (editForm.albumId) {
+        payload.albumId = editForm.albumId
+      }
+
+      console.log(payload)
+
+      await songsApi.updateSong(
+        getId(editingSong),
+        payload
+      )
+
       toast.success('Cap nhat bai hat thanh cong.')
+
       setEditingSong(null)
+
       await loadSongs()
-    } catch (err) {
-      const message = err.message || 'Cap nhat bai hat that bai.'
-      setError(message)
-      toast.error(message)
-    } finally {
+
+  } catch (err) {
+    console.log('FULL ERROR:', err)
+    console.log('STATUS:', err.status)
+    console.log('DATA:', err.data)
+
+    const message =
+      err?.data?.message ||
+      err?.data?.error ||
+      err?.message ||
+      'Cap nhat bai hat that bai.'
+
+    setError(message)
+    toast.error(message)
+  } finally {
       setSaving(false)
     }
   }
@@ -261,6 +302,21 @@ export default function AdminSongs() {
             <h3 className="text-lg font-semibold text-slate-900">Edit song</h3>
             <div className="mt-4 space-y-3">
               <input value={editForm.title} onChange={(e) => setEditForm((value) => ({ ...value, title: e.target.value }))} placeholder="Title" className="w-full rounded-lg border px-3 py-2 text-sm" required />
+                <input
+                  type="number"
+                  min="1"
+                  value={editForm.duration}
+                  onChange={(e) =>
+                    setEditForm((value) => ({ 
+                      ...value,
+                      duration: e.target.value,
+                    }))
+                  }
+                  placeholder="Duration (seconds)"
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  required
+                />
+
               <select value={editForm.artistId} onChange={(e) => setEditForm((value) => ({ ...value, artistId: e.target.value, albumId: '' }))} className="w-full rounded-lg border px-3 py-2 text-sm" required>
                 <option value="">Chon nghe si *</option>
                 {artists.map((artist) => <option key={getId(artist)} value={getId(artist)}>{artist?.name}</option>)}

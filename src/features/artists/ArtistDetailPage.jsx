@@ -43,14 +43,14 @@ function ArtistBanner({ artist }) {
               <p className="text-xs uppercase tracking-[0.18em] text-red-50/80">Bài hát</p>
               <p className="mt-2 text-2xl font-semibold">{artist?.songCount || 0}</p>
             </div>
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+            {/* <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
               <p className="text-xs uppercase tracking-[0.18em] text-red-50/80">Người theo dõi</p>
               <p className="mt-2 text-2xl font-semibold">{artist?.followerCount || 0}</p>
-            </div>
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+            </div> */}
+            {/* <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
               <p className="text-xs uppercase tracking-[0.18em] text-red-50/80">Trạng thái</p>
               <p className="mt-2 text-2xl font-semibold">{artist?.isFollowing ? 'Đang theo dõi' : 'Khám phá'}</p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -68,12 +68,12 @@ export default function ArtistDetailPage() {
 
   const albumsCatalog = usePagedSearch(
     async ({ query, page, size }) => albumsApi.getAlbums({ artistId, page, size, q: query }),
-    { initialSize: 12, dependencies: [artistId] },
+    { initialSize: 5, dependencies: [artistId] },
   )
 
   const songsCatalog = usePagedSearch(
     async ({ page, size }) => artistsApi.getArtistSongs(artistId, { page, size }),
-    { initialSize: 12, dependencies: [artistId] },
+    { initialSize: 5, dependencies: [artistId] },
   )
 
   useEffect(() => {
@@ -151,7 +151,6 @@ export default function ArtistDetailPage() {
                 Albums
               </div>
               <h2 className="mt-3 text-xl font-semibold text-slate-900">Album của nghệ sĩ</h2>
-              <p className="mt-1 text-sm text-slate-500">Tìm và tải thêm album theo nghệ sĩ từ dữ liệu DB.</p>
             </div>
             <button
               type="button"
@@ -240,7 +239,6 @@ export default function ArtistDetailPage() {
                 Songs
               </div>
               <h2 className="mt-3 text-xl font-semibold text-slate-900">Bài hát của nghệ sĩ</h2>
-              <p className="mt-1 text-sm text-slate-500">Chọn để phát ngay trong player.</p>
             </div>
             <button
               type="button"
@@ -253,7 +251,6 @@ export default function ArtistDetailPage() {
           </div>
 
           <div className="grid gap-3 md:grid-cols-[1fr_180px]">
-
             <label className="space-y-1">
               <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Số lượng</span>
               <input

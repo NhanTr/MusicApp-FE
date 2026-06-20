@@ -66,10 +66,6 @@ export default function AdminLayout() {
               <ShieldBan className="h-4 w-4" />
               Quan ly tai khoan
             </NavLink>
-            <NavLink to="/admin/admins" className={navClass}>
-              <UserCog className="h-4 w-4" />
-              Quan ly admin
-            </NavLink>
           </nav>
         </aside>
 

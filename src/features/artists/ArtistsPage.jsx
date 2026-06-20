@@ -23,7 +23,6 @@ export default function ArtistsPage() {
           Artists
         </div>
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Nghệ sĩ</h1>
-        <p className="text-slate-600">Tìm nghệ sĩ ngay khi gõ, rồi kéo thêm dữ liệu theo từng lô.</p>
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -97,7 +96,6 @@ export default function ArtistsPage() {
 
                 <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
                   <span>{artist.songCount || 0} bài hát</span>
-                  <span>{artist.followerCount || 0} người theo dõi</span>
                 </div>
                 <p className="mt-3 text-xs font-medium text-red-700 opacity-0 transition group-hover:opacity-100">
                   Xem chi tiết nghệ sĩ

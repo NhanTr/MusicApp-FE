@@ -249,7 +249,7 @@ export default function Playlists() {
           Playlist
         </div>
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Playlist</h1>
-        <p className="text-slate-600">Tìm playlist theo tên ngay khi gõ, chọn số lượng và tải thêm theo lô.</p>
+        
       </div>
 
       <form onSubmit={handleCreatePlaylist} className="rounded-2xl border bg-white p-5 shadow-sm">

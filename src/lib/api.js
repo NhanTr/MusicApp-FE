@@ -111,14 +111,15 @@ function buildRequestInit(options = {}) {
 }
 
 async function parseResponse(response) {
-	const contentType = response.headers.get('content-type') || ''
-
-	if (contentType.includes('application/json')) {
-		return response.json()
-	}
-
 	const text = await response.text()
-	return text ? { message: text } : null
+
+	if (!text) return null
+
+ 	try {
+   		return JSON.parse(text)
+ 	} catch {
+   		return { message: text }
+ }
 }
 
 export async function apiFetch(path, options = {}) {
@@ -252,14 +253,14 @@ export const authApi = {
 	updatePassword: (payload) =>
 		apiJson('/api/auth/update-password', { method: 'PUT', body: payload, auth: true }),
 	updateProfile: (payload) =>
-		apiJson('/api/auth/profile', { method: 'PUT', body: payload, auth: true }),
+		apiJson('/api/auth/me', { method: 'PUT', body: payload, auth: true }),
 	me: () => fetchWithAuthJson('/api/auth/me'),
 }
 
 export const songsApi = {
 	getSongs: (params = {}) =>
 		fetchWithAuthJson(`/api/songs${toQueryString({ page: params.page, size: params.size, sort: params.sort, q: params.q })}`),
-	getSongById: (id) => fetchWithAuthJson(`/api/songs/${id}`),
+	getSongById: (id) => apiJson(`/api/songs/${id}`),
 	getTrendingSongs: (params = {}) =>
 		fetchWithAuthJson(`/api/songs/trending${toQueryString({ page: params.page, size: params.size })}`),
 	searchSongs: (query, params = {}) =>

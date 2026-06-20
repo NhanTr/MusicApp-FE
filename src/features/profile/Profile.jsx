@@ -6,10 +6,9 @@ import { toast } from 'sonner'
 import { authApi } from '@/lib/api'
 
 const initialProfileForm = {
+  username: '',
+  email: '',
   displayName: '',
-  birthYear: '',
-  address: '',
-  phone: '',
 }
 
 export default function Profile() {
@@ -26,32 +25,32 @@ export default function Profile() {
   useEffect(() => {
     let isMounted = true
 
-    async function loadUser() {
-      setLoading(true)
-      setError('')
+async function loadUser() {
+  setLoading(true)
+  setError('')
 
-      try {
-        const data = await authApi.me()
-        if (!isMounted) return
+  try {
+    const data = await authApi.me()
 
-        setUser(data)
-        setProfileForm({
-          displayName: data?.displayName || data?.name || '',
-          birthYear: data?.birthYear || '',
-          address: data?.address || '',
-          phone: data?.phone || '',
-        })
-      } catch (err) {
-        if (!isMounted) return
-        const message = err.message || 'Khong tai duoc thong tin tai khoan.'
-        setError(message)
-        toast.error(message)
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
+    if (!isMounted) return
+
+    setUser(data)
+  } catch (err) {
+    if (!isMounted) return
+
+    const message =
+      err.message ||
+      'Khong tai duoc thong tin tai khoan.'
+
+    setError(message)
+    toast.error(message)
+
+  } finally {
+    if (isMounted) {
+      setLoading(false)
     }
+  }
+}
 
     loadUser()
 
@@ -59,31 +58,6 @@ export default function Profile() {
       isMounted = false
     }
   }, [])
-
-  async function handleUpdateProfile(e) {
-    e.preventDefault()
-    setSavingProfile(true)
-    setError('')
-
-    try {
-      const payload = {
-        displayName: profileForm.displayName.trim(),
-        birthYear: profileForm.birthYear ? Number(profileForm.birthYear) : null,
-        address: profileForm.address.trim(),
-        phone: profileForm.phone.trim(),
-      }
-      const updatedUser = await authApi.updateProfile(payload)
-      setUser((currentUser) => ({ ...currentUser, ...(updatedUser || payload) }))
-      toast.success('Cap nhat thong tin ca nhan thanh cong.')
-    } catch (err) {
-      const message = err.message || 'Khong cap nhat duoc thong tin ca nhan.'
-      setError(message)
-      toast.error(message)
-    } finally {
-      setSavingProfile(false)
-    }
-  }
-
   async function handleUpdatePassword(e) {
     e.preventDefault()
     if (newPassword !== confirmPassword) {
@@ -161,51 +135,6 @@ export default function Profile() {
               <p><span className="font-medium text-slate-900">Vai tro:</span> {user.role || 'User'}</p>
             </div>
           </section>
-
-          <form onSubmit={handleUpdateProfile} className="rounded-xl border bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <UserCircle2 className="w-5 h-5 text-red-700" />
-              <h2 className="text-lg font-semibold text-slate-900">Cap nhat thong tin</h2>
-            </div>
-            <div className="space-y-3">
-              <input
-                value={profileForm.displayName}
-                onChange={(e) => setProfileForm((form) => ({ ...form, displayName: e.target.value }))}
-                placeholder="Display name"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-red-300"
-              />
-              <input
-                type="number"
-                min="1900"
-                max={new Date().getFullYear()}
-                value={profileForm.birthYear}
-                onChange={(e) => setProfileForm((form) => ({ ...form, birthYear: e.target.value }))}
-                placeholder="Birth year"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-red-300"
-              />
-              <input
-                value={profileForm.address}
-                onChange={(e) => setProfileForm((form) => ({ ...form, address: e.target.value }))}
-                placeholder="Address"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-red-300"
-              />
-              <input
-                value={profileForm.phone}
-                onChange={(e) => setProfileForm((form) => ({ ...form, phone: e.target.value }))}
-                placeholder="Phone"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-red-300"
-              />
-              <button
-                type="submit"
-                disabled={savingProfile}
-                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-60"
-              >
-                <UserCircle2 className="w-4 h-4" />
-                {savingProfile ? 'Dang luu...' : 'Luu thong tin'}
-              </button>
-            </div>
-          </form>
-
           <form onSubmit={handleUpdatePassword} className="rounded-xl border bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <LockKeyhole className="w-5 h-5 text-red-700" />

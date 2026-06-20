@@ -169,7 +169,6 @@ export default function AlbumDetailPage() {
                 Songs
               </div>
               <h2 className="mt-3 text-xl font-semibold text-slate-900">Bài hát trong album</h2>
-              <p className="mt-1 text-sm text-slate-500">Chọn từng bài để phát hoặc thích ngay trong danh sách.</p>
             </div>
             <div className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">{songs.length} tracks</div>
           </div>
@@ -225,7 +224,6 @@ export default function AlbumDetailPage() {
                 Related
               </div>
               <h2 className="mt-3 text-xl font-semibold text-slate-900">Album cùng nghệ sĩ</h2>
-              <p className="mt-1 text-sm text-slate-500">Dữ liệu được tải từ cùng nghệ sĩ trong database.</p>
             </div>
           </div>
 

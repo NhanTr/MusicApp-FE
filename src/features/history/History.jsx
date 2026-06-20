@@ -129,7 +129,7 @@ export default function History() {
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Lịch Sử Nghe</h1>
-          <p className="text-slate-600 mt-2">Tìm, lọc và tải dần các bài hát đã phát từ dữ liệu DB.</p>
+          
         </div>
 
         <button
