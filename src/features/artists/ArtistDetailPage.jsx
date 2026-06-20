@@ -253,9 +253,7 @@ export default function ArtistDetailPage() {
           </div>
 
           <div className="grid gap-3 md:grid-cols-[1fr_180px]">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-              Danh sách bài hát theo nghệ sĩ, tải dần theo lô.
-            </div>
+
             <label className="space-y-1">
               <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Số lượng</span>
               <input
