@@ -1,201 +1,154 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { Album, ListMusic, Music2, Play, UserRound } from 'lucide-react'
-
-import { useMusic } from '@/contexts/MusicContext'
-import { apiUtils, searchApi, favoritesApi } from '@/lib/api'
-import LikeButton from '@/components/LikeButton'
-import { resolveSongListenerCount } from '@/lib/song-utils'
-
-const SONG_SORT_OPTIONS = [
-  { value: 'listeners-desc', label: 'Nghe nhiều nhất' },
-  { value: 'listeners-asc', label: 'Nghe ít nhất' },
-  { value: 'title-asc', label: 'Tên A-Z' },
-  { value: 'title-desc', label: 'Tên Z-A' },
-]
-
-function normalizeSearchResults(data) {
-  if (!data) return { songs: [], artists: [], albums: [], playlists: [] }
-  const payload = data?.data || data
-  return {
-    songs: Array.isArray(payload?.songs) ? payload.songs : apiUtils.extractList(payload?.songs),
-    artists: Array.isArray(payload?.artists) ? payload.artists : apiUtils.extractList(payload?.artists),
-    albums: Array.isArray(payload?.albums) ? payload.albums : apiUtils.extractList(payload?.albums),
-    playlists: Array.isArray(payload?.playlists) ? payload.playlists : apiUtils.extractList(payload?.playlists),
-  }
-}
-
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Search, X } from "lucide-react";
+import { searchApi } from "@/lib/api";
+import { useLikedSongs } from "@/hooks/useLikedSongs";
+import {
+  CollectionFooter,
+  EmptyState,
+  TrackList,
+} from "@/components/music/Collection";
 export default function SearchPage() {
-  const { setCurrentSong } = useMusic()
-  const [searchParams] = useSearchParams()
-  const query = searchParams.get('q')?.trim() || ''
-
-  const [results, setResults] = useState({ songs: [], artists: [], albums: [], playlists: [] })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [likedSongs, setLikedSongs] = useState(new Set())
-  const [songSort, setSongSort] = useState('listeners-desc')
-
+  const [params, setParams] = useSearchParams();
+  const query = params.get("q") || "";
+  const [state, setState] = useState({ query: "", data: null, error: "" }),
+    [category, setCategory] = useState("all");
+  const likedIds = useLikedSongs();
   useEffect(() => {
-    const loadFavorites = async () => {
-      try {
-        const favorites = await favoritesApi.getFavorites({ size: 1000 })
-        const items = apiUtils.extractList(favorites)
-        const favoriteIds = new Set(items.map((s) => s.songId || s.song?.id || s.id || s._id))
-        setLikedSongs(favoriteIds)
-      } catch (err) {
-        console.error('Error loading favorites:', err)
-      }
-    }
-    loadFavorites()
-  }, [])
-
-  useEffect(() => {
-    let isMounted = true
-
-    async function loadResults() {
-      if (!query) {
-        setResults({ songs: [], artists: [], albums: [], playlists: [] })
-        setLoading(false)
-        setError('')
-        return
-      }
-
-      setLoading(true)
-      setError('')
-
-      try {
-        // Gửi query GỐC có dấu lên BE để BE tự tìm
-        const data = await searchApi.search(query, { page: 0, size: 20 })
-        if (!isMounted) return
-        setResults(normalizeSearchResults(data))
-      } catch (err) {
-        if (!isMounted) return
-        setError(err.message || 'Không tìm thấy kết quả phù hợp.')
-      } finally {
-        if (isMounted) setLoading(false)
-      }
-    }
-
-    const timer = setTimeout(loadResults, 400)
+    if (!query.trim()) return;
+    let active = true;
+    const timer = setTimeout(() => {
+      searchApi
+        .search(query.trim(), { size: 20 })
+        .then((data) => {
+          if (active) setState({ query, data, error: "" });
+        })
+        .catch((error) => {
+          if (active) setState({ query, data: null, error: error.message });
+        });
+    }, 300);
     return () => {
-      isMounted = false
-      clearTimeout(timer)
-    }
-  }, [query])
-
-  const hasResults = useMemo(
-    () => results.songs.length || results.artists.length || results.albums.length || results.playlists.length,
-    [results],
-  )
-
-  const sortedSongs = useMemo(() => {
-    return [...results.songs].sort((a, b) => {
-      const aTitle = (a.title || a.name || '').toLowerCase()
-      const bTitle = (b.title || b.name || '').toLowerCase()
-      const aCount = resolveSongListenerCount(a)
-      const bCount = resolveSongListenerCount(b)
-      switch (songSort) {
-        case 'listeners-asc': return aCount - bCount
-        case 'title-asc': return aTitle.localeCompare(bTitle)
-        case 'title-desc': return bTitle.localeCompare(aTitle)
-        default: return bCount - aCount
-      }
-    })
-  }, [results.songs, songSort])
-
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [query]);
+  const loading = !!query.trim() && state.query !== query;
+  const data = query.trim() && state.query === query ? state.data : null;
+  const hasResults =
+    data &&
+    ["songs", "artists", "albums", "playlists"].some(
+      (key) => data[key]?.length,
+    );
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Tìm Kiếm Tổng Hợp</h1>
-        <p className="text-slate-600 mt-2">
-          {query ? `Kết quả cho "${query}"` : 'Nhập từ khóa ở thanh tìm kiếm phía trên.'}
+    <div className="catalog-page">
+      <section className="catalog-title">
+        <p className="eyebrow">
+          <i />
+          TÌM KIẾM · THEO CẢM HỨNG CỦA BẠN
         </p>
-      </div>
-
-      {!query && (
-        <div className="rounded-xl border bg-white p-5 shadow-sm text-sm text-slate-500">
-          Tìm theo bài hát, nghệ sĩ, album hoặc playlist.
-        </div>
+        <h1>
+          Tìm một giai điệu<span className="brand-dot">.</span>
+        </h1>
+        <p>Bài hát, nghệ sĩ, album — thế giới âm nhạc đang chờ bạn.</p>
+        <label className="collection-search search-main">
+          <Search size={20} />
+          <input
+            autoComplete="off"
+            aria-label="Tìm bài hát, nghệ sĩ, album"
+            placeholder="Bạn muốn nghe gì hôm nay?"
+            value={query}
+            onChange={(e) =>
+              setParams(e.target.value ? { q: e.target.value } : {}, {
+                replace: true,
+              })
+            }
+          />
+          {query && (
+            <button aria-label="Xóa tìm kiếm" onClick={() => setParams({})}>
+              <X size={17} />
+            </button>
+          )}
+        </label>
+      </section>
+      <nav className="search-categories" aria-label="Loại kết quả">
+        {[
+          ["all", "Tất cả"],
+          ["songs", "Bài hát"],
+          ["artists", "Nghệ sĩ"],
+          ["albums", "Album"],
+          ["playlists", "Playlist"],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            className={`search-chip ${category === key ? "active" : ""}`}
+            onClick={() => setCategory(key)}
+            aria-pressed={category === key}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+      {loading && (
+        <p className="track-loading" role="status">
+          Đang tìm giai điệu của bạn…
+        </p>
       )}
-
-      {loading && <p className="text-sm text-slate-500">Đang tải kết quả...</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
-
-      {!!query && !loading && !error && !hasResults && (
-        <div className="rounded-xl border bg-white p-5 shadow-sm text-sm text-slate-500">
-          Không có kết quả nào phù hợp.
-        </div>
+      {state.query === query && state.error && (
+        <p className="inline-error" role="alert">
+          {state.error}
+        </p>
       )}
-
-      {!!hasResults && (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <section className="rounded-xl border bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Music2 className="w-5 h-5 text-red-700" />
-                <h2 className="text-lg font-semibold text-slate-900">Bài hát</h2>
-              </div>
-              <select
-                value={songSort}
-                onChange={(e) => setSongSort(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
-              >
-                {SONG_SORT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              {sortedSongs.map((song) => (
-                <div key={song.id || song._id || song.title} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 hover:bg-slate-100 transition group">
-                  <Music2 className="w-4 h-4 text-red-700 shrink-0" />
-                  <button type="button" onClick={() => setCurrentSong(song)} className="min-w-0 flex-1 text-left">
-                    <p className="font-medium text-slate-900 truncate">{song.title || song.name || 'Untitled song'}</p>
-                    <p className="text-sm text-slate-500 truncate">{typeof song.artist === 'string' ? song.artist : song.artist?.name || 'Unknown artist'}</p>
-                    <p className="text-xs text-slate-400 truncate">{resolveSongListenerCount(song)} lượt nghe</p>
-                  </button>
-                  <Play className="w-4 h-4 text-slate-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <LikeButton
-                      songId={song.id || song._id}
-                      initialLiked={likedSongs.has(song.id || song._id)}
-                      onLikeChange={(liked) => {
-                        const next = new Set(likedSongs)
-                        if (liked) next.add(song.id || song._id)
-                        else next.delete(song.id || song._id)
-                        setLikedSongs(next)
-                      }}
-                    />
-                  </div>
+      {!query.trim() && (
+        <EmptyState
+          type="music"
+          title="Âm nhạc bắt đầu từ sự tò mò"
+          description="Nhập tên bài hát, nghệ sĩ hoặc album yêu thích."
+        />
+      )}
+      {query.trim() && !loading && !state.error && !hasResults && (
+        <EmptyState />
+      )}
+      {data &&
+        (category === "all" || category === "songs") &&
+        !!data.songs?.length && (
+          <section className="search-section">
+            <h2>Bài hát</h2>
+            <TrackList songs={data.songs} likedIds={likedIds} />
+          </section>
+        )}
+      {data &&
+        [
+          ["artists", "Nghệ sĩ", "/music/artists"],
+          ["albums", "Album", "/music/albums"],
+          ["playlists", "Playlist", "/music/playlists"],
+        ]
+          .filter(([key]) => category === "all" || category === key)
+          .map(([key, label, path]) =>
+            data[key]?.length ? (
+              <section className="search-section" key={key}>
+                <h2>{label}</h2>
+                <div className="result-grid">
+                  {data[key].map((item) => (
+                    <Link
+                      className="result-card"
+                      key={item.id}
+                      to={key === "playlists" ? path : `${path}/${item.id}`}
+                    >
+                      <h3>{item.name}</h3>
+                      <p>{label} ↗</p>
+                    </Link>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-xl border bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <UserRound className="w-5 h-5 text-red-700" />
-              <h2 className="text-lg font-semibold text-slate-900">Nghệ sĩ</h2>
-            </div>
-            <div className="space-y-2">
-              {results.artists.map((artist) => (
-                <Link key={artist.id || artist.name} to={`/music/artists/${artist.id}`}
-                  className="block rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition hover:border-red-200 hover:bg-red-50">
-                  <p className="font-medium text-slate-900 truncate">{artist.name || 'Unknown artist'}</p>
-                  <p className="text-sm text-slate-500 truncate">Nghệ sĩ</p>
-                </Link>
-              ))}
-            </div>
-          </section>
-        </div>
+              </section>
+            ) : null,
+          )}
+      {hasResults && category !== "all" && !data[category]?.length && (
+        <EmptyState
+          title="Không có kết quả trong mục này"
+          description="Thử chọn một loại kết quả khác."
+        />
       )}
-
-      {!query && (
-        <div className="mt-6 text-sm text-slate-500">
-          Quay lại <Link to="/music/trending" className="text-red-700 font-medium hover:underline">Nhạc Xu Hướng</Link> để xem bài hát đang thịnh hành.
-        </div>
-      )}
+      <CollectionFooter />
     </div>
-  )
+  );
 }

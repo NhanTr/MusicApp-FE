@@ -35,15 +35,15 @@ function getPlaylistSongs(playlist) {
 
 function PlaylistSongList({ songs, loading, error, onPlaySong }) {
   if (loading) {
-    return <p className="text-sm text-slate-500">Đang tải bài hát trong playlist...</p>
+    return <p className="text-sm text-muted-foreground">Đang tải bài hát trong playlist...</p>
   }
 
   if (error) {
-    return <p className="text-sm text-red-600">{error}</p>
+    return <p className="text-sm text-primary">{error}</p>
   }
 
   if (!songs.length) {
-    return <p className="text-sm text-slate-500">Playlist này chưa có bài hát nào.</p>
+    return <p className="text-sm text-muted-foreground">Playlist này chưa có bài hát nào.</p>
   }
 
   return (
@@ -55,15 +55,15 @@ function PlaylistSongList({ songs, loading, error, onPlaySong }) {
           <button
             key={songId}
             type="button"
-            onClick={() => onPlaySong(song)}
-            className="group flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:bg-slate-100"
+            onClick={() => onPlaySong(song, songs)}
+            className="group flex w-full items-center gap-3 rounded-lg border border-border bg-secondary px-3 py-2 text-left transition hover:bg-secondary"
           >
-            <Music2 className="h-4 w-4 shrink-0 text-red-700" />
+            <Music2 className="h-4 w-4 shrink-0 text-primary" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-slate-900">{song.title || song.name || song.songName || 'Untitled song'}</p>
-              <p className="truncate text-xs text-slate-500">{song.artist?.name || song.artist || 'Unknown artist'}</p>
+              <p className="truncate text-sm font-medium text-foreground">{song.title || song.name || song.songName || 'Untitled song'}</p>
+              <p className="truncate text-xs text-muted-foreground">{song.artist?.name || song.artist || 'Unknown artist'}</p>
             </div>
-            <Play className="h-4 w-4 shrink-0 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100" />
+            <Play className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
           </button>
         )
       })}
@@ -85,7 +85,7 @@ function PlaylistCard({
   const songs = getPlaylistSongs(selectedPlaylist || playlist)
 
   return (
-    <div className={`rounded-xl border bg-white p-4 shadow-sm transition ${isSelected ? 'border-red-200 ring-1 ring-red-100' : 'border-slate-200'}`}>
+    <div className={`rounded-xl border bg-card p-4 shadow-none transition ${isSelected ? 'border-primary/30 ring-1 ring-primary/20' : 'border-border'}`}>
       <div className="flex items-start justify-between gap-3">
         <button
           type="button"
@@ -93,26 +93,26 @@ function PlaylistCard({
           className="min-w-0 flex-1 text-left"
         >
           <div className="flex items-center gap-2">
-            <h3 className="truncate font-semibold text-slate-900">{playlist.name || playlist.title || 'Untitled playlist'}</h3>
+            <h3 className="truncate font-semibold text-foreground">{playlist.name || playlist.title || 'Untitled playlist'}</h3>
             {playlist.public ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
                 <Users className="w-3 h-3" /> Public
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+              <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                 <Lock className="w-3 h-3" /> Private
               </span>
             )}
           </div>
-          <p className="mt-1 truncate text-sm text-slate-500">{playlist.description || 'Chưa có mô tả'}</p>
-          <p className="mt-2 text-xs text-slate-400">{getPlaylistSongs(playlist).length} bài hát</p>
+          <p className="mt-1 truncate text-sm text-muted-foreground">{playlist.description || 'Chưa có mô tả'}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{getPlaylistSongs(playlist).length} bài hát</p>
         </button>
 
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => onSelect(playlist)}
-            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:bg-secondary"
           >
             {isSelected ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             {isSelected ? 'Ẩn' : 'Xem'}
@@ -122,7 +122,7 @@ function PlaylistCard({
             <button
               type="button"
               onClick={() => onDelete(playlist.id || playlist._id)}
-              className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-sm text-red-700 hover:bg-red-50"
+              className="inline-flex items-center gap-1 rounded-lg border border-primary/30 px-3 py-2 text-sm text-primary hover:bg-primary/10"
             >
               <Trash2 className="w-4 h-4" />
               Xóa
@@ -132,7 +132,7 @@ function PlaylistCard({
       </div>
 
       {isSelected && (
-        <div className="mt-4 border-t border-slate-100 pt-4">
+        <div className="mt-4 border-t border-border pt-4">
           <PlaylistSongList
             songs={songs}
             loading={songsLoading}
@@ -244,26 +244,26 @@ export default function Playlists() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <div className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
+        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
           <ListMusic className="h-4 w-4" />
           Playlist
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Playlist</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Playlist</h1>
         
       </div>
 
-      <form onSubmit={handleCreatePlaylist} className="rounded-2xl border bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-          <Plus className="w-5 h-5 text-red-700" /> Tạo playlist mới
+      <form onSubmit={handleCreatePlaylist} className="rounded-2xl border bg-card p-5 shadow-none">
+        <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Plus className="w-5 h-5 text-primary" /> Tạo playlist mới
         </h2>
         <div className="grid gap-3 md:grid-cols-2">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Tên playlist"
-            className="rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-red-300"
+            className="rounded-lg border border-border px-3 py-2 outline-none focus:border-primary/30"
           />
-          <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+          <label className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground">
             <input
               type="checkbox"
               checked={isPublic}
@@ -275,33 +275,33 @@ export default function Playlists() {
         <button
           type="submit"
           disabled={isCreating}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-60"
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary disabled:opacity-60"
         >
           <Plus className="w-4 h-4" />
           {isCreating ? 'Đang tạo...' : 'Tạo playlist'}
         </button>
       </form>
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <section className="rounded-2xl border border-border bg-card p-4 shadow-none">
         <div className="grid gap-3 md:grid-cols-[1fr_180px]">
           <label className="space-y-1">
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Tìm kiếm</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tìm kiếm</span>
             <input
               value={catalog.query}
               onChange={(event) => catalog.setQuery(event.target.value)}
               placeholder="Tìm theo tên playlist"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-red-300 focus:bg-white"
+              className="w-full rounded-xl border border-border bg-secondary px-4 py-3 outline-none transition focus:border-primary/30 focus:bg-card"
             />
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Số lượng</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Số lượng</span>
             <input
               type="number"
               min="1"
               step="1"
               value={catalog.pageSize}
               onChange={(event) => catalog.setPageSize(Math.max(1, Number(event.target.value) || 1))}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-red-300 focus:bg-white"
+              className="w-full rounded-xl border border-border bg-secondary px-4 py-3 outline-none transition focus:border-primary/30 focus:bg-card"
             />
           </label>
         </div>
@@ -311,14 +311,14 @@ export default function Playlists() {
             <button
               type="button"
               onClick={() => setActiveTab('mine')}
-              className={`rounded-lg px-4 py-2 text-sm font-medium ${activeTab === 'mine' ? 'bg-red-600 text-white' : 'border border-slate-200 bg-white text-slate-700'}`}
+              className={`rounded-lg px-4 py-2 text-sm font-medium ${activeTab === 'mine' ? 'bg-primary text-white' : 'border border-border bg-card text-foreground'}`}
             >
               Playlist của tôi
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('public')}
-              className={`rounded-lg px-4 py-2 text-sm font-medium ${activeTab === 'public' ? 'bg-red-600 text-white' : 'border border-slate-200 bg-white text-slate-700'}`}
+              className={`rounded-lg px-4 py-2 text-sm font-medium ${activeTab === 'public' ? 'bg-primary text-white' : 'border border-border bg-card text-foreground'}`}
             >
               Public
             </button>
@@ -327,22 +327,22 @@ export default function Playlists() {
           <button
             type="button"
             onClick={catalog.reload}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground transition hover:bg-secondary"
           >
             <RefreshCw className="h-4 w-4" />
             Tải lại
           </button>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3 text-sm text-slate-500">
+        <div className="mt-4 flex items-center justify-between gap-3 text-sm text-muted-foreground">
           <span>
             {catalog.loading ? 'Đang tải...' : `Hiển thị ${catalog.items.length}/${catalog.totalElements || catalog.items.length} playlist`}
           </span>
           <span>{activeTab === 'mine' ? 'Danh sách của tôi' : 'Danh sách public'}</span>
         </div>
 
-        {actionError && <p className="mt-3 text-sm text-red-600">{actionError}</p>}
-        {catalog.error && <p className="mt-3 text-sm text-red-600">{catalog.error}</p>}
+        {actionError && <p className="mt-3 text-sm text-primary">{actionError}</p>}
+        {catalog.error && <p className="mt-3 text-sm text-primary">{catalog.error}</p>}
 
         <div className="mt-4 space-y-3">
           {catalog.items.map((playlist) => (
@@ -361,7 +361,7 @@ export default function Playlists() {
           ))}
 
           {!catalog.loading && !catalog.error && !catalog.items.length && (
-            <p className="text-sm text-slate-500">Chưa có playlist nào.</p>
+            <p className="text-sm text-muted-foreground">Chưa có playlist nào.</p>
           )}
         </div>
 
@@ -371,7 +371,7 @@ export default function Playlists() {
               type="button"
               onClick={catalog.loadMore}
               disabled={catalog.loadingMore}
-              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary disabled:opacity-60"
             >
               {catalog.loadingMore ? 'Đang tải thêm...' : 'Tải thêm'}
             </button>

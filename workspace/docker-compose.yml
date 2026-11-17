@@ -1,0 +1,80 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: music-postgres
+    environment:
+      POSTGRES_DB: SoundCloudDB
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_user_1412
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../backend_MusicApp/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d SoundCloudDB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: music-redis
+    command: ["redis-server", "--requirepass", "redis123"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db-import:
+    image: postgres:16-alpine
+    profiles:
+      - tools
+    environment:
+      PGPASSWORD: app_user_1412
+    volumes:
+      - ../../backend_MusicApp/src/main/resources/schema.sql:/schema.sql:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - sh
+      - -c
+      - |
+        psql -h postgres -U app_user -d SoundCloudDB -v ON_ERROR_STOP=1 -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public AUTHORIZATION app_user;"
+        psql -h postgres -U app_user -d SoundCloudDB -v ON_ERROR_STOP=1 -f /schema.sql
+
+  backend:
+    build:
+      context: ../../backend_MusicApp
+    container_name: music-backend
+    env_file:
+      - ../../backend_MusicApp/.env
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ..
+    container_name: music-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
+  redis_data:

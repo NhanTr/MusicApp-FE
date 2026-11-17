@@ -214,31 +214,31 @@ export default function AdminAccounts() {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
+      <section className="rounded-xl border bg-card p-4 shadow-none">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Quan ly tai khoan</h2>
-            <p className="mt-1 text-sm text-slate-500">Tim kiem, sap xep, chinh sua va ban tai khoan nguoi dung.</p>
+            <h2 className="text-xl font-bold text-foreground">Quan ly tai khoan</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Tim kiem, sap xep, chinh sua va ban tai khoan nguoi dung.</p>
           </div>
           <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tim theo ten hoac email..."
-              className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+              className="w-full rounded-lg border border-border py-2 pl-9 pr-3 text-sm outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>
       </section>
 
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
+      <section className="rounded-xl border bg-card p-4 shadow-none">
         {loading ? (
-          <p className="text-sm text-slate-500">Dang tai danh sach tai khoan...</p>
+          <p className="text-sm text-muted-foreground">Dang tai danh sach tai khoan...</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="border-b text-xs uppercase text-slate-500">
+              <thead className="border-b text-xs uppercase text-muted-foreground">
                 <tr>
                   {[
                     ['username', 'Username'],
@@ -259,7 +259,7 @@ export default function AdminAccounts() {
               <tbody>
                 {users.length === 0 && (
                   <tr>
-                    <td colSpan="5" className="px-3 py-6 text-center text-slate-500">Khong co tai khoan phu hop.</td>
+                    <td colSpan="5" className="px-3 py-6 text-center text-muted-foreground">Khong co tai khoan phu hop.</td>
                   </tr>
                 )}
                 {users.map((user) => {
@@ -267,27 +267,27 @@ export default function AdminAccounts() {
                   const isCurrentUser = isSameUser(user, currentUser)
                   return (
                     <tr key={getId(user)} className="border-b last:border-0">
-                      <td className="px-3 py-3 font-medium text-slate-900">{user.username || user.name || 'No name'}</td>
-                      <td className="px-3 py-3 text-slate-600">{user.email || 'No email'}</td>
-                      <td className="px-3 py-3 text-slate-600">{user.role || 'USER'}</td>
+                      <td className="px-3 py-3 font-medium text-foreground">{user.username || user.name || 'No name'}</td>
+                      <td className="px-3 py-3 text-muted-foreground">{user.email || 'No email'}</td>
+                      <td className="px-3 py-3 text-muted-foreground">{user.role || 'USER'}</td>
                       <td className="px-3 py-3">
-                        <span className={['rounded-full px-2 py-1 text-xs font-medium', banned ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'].join(' ')}>
+                        <span className={['rounded-full px-2 py-1 text-xs font-medium', banned ? 'bg-primary/10 text-primary' : 'bg-emerald-100 text-emerald-700'].join(' ')}>
                           {banned ? 'Da ban' : 'Hoat dong'}
                         </span>
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => openEdit(user)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs text-slate-700 hover:bg-slate-50">
+                          <button onClick={() => openEdit(user)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs text-foreground hover:bg-secondary">
                             <Edit className="h-3 w-3" />
                             Edit
                           </button>
                           {!isCurrentUser && (
                             banned ? (
-                              <button onClick={() => handleUnban(user)} className="rounded-lg border px-3 py-1 text-xs text-slate-700 hover:bg-slate-50">
+                              <button onClick={() => handleUnban(user)} className="rounded-lg border px-3 py-1 text-xs text-foreground hover:bg-secondary">
                                 Mo ban
                               </button>
                             ) : (
-                              <button onClick={() => handleBan(user)} className="rounded-lg border border-red-300 px-3 py-1 text-xs text-red-600 hover:bg-red-50">
+                              <button onClick={() => handleBan(user)} className="rounded-lg border border-primary/30 px-3 py-1 text-xs text-primary hover:bg-primary/10">
                                 Ban
                               </button>
                             )
@@ -303,7 +303,7 @@ export default function AdminAccounts() {
         )}
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-          <span className="text-slate-500">Tong: {pageData.totalElements}</span>
+          <span className="text-muted-foreground">Tong: {pageData.totalElements}</span>
           <div className="flex items-center gap-2">
             <button disabled={page === 0 || loading} onClick={() => setPage((value) => Math.max(0, value - 1))} className="rounded-lg border px-3 py-1 disabled:opacity-50">
               Prev
@@ -312,7 +312,7 @@ export default function AdminAccounts() {
               <button
                 key={pageNumber}
                 onClick={() => setPage(pageNumber)}
-                className={['rounded-lg border px-3 py-1', pageNumber === page ? 'border-red-600 bg-red-600 text-white' : 'hover:bg-slate-50'].join(' ')}
+                className={['rounded-lg border px-3 py-1', pageNumber === page ? 'border-primary bg-primary text-white' : 'hover:bg-secondary'].join(' ')}
               >
                 {pageNumber + 1}
               </button>
@@ -323,13 +323,13 @@ export default function AdminAccounts() {
           </div>
         </div>
 
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-primary">{error}</p>}
       </section>
 
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <form onSubmit={submitEdit} className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">Edit user</h3>
+          <form onSubmit={submitEdit} className="w-full max-w-md rounded-xl bg-card p-5 shadow-xl">
+            <h3 className="text-lg font-semibold text-foreground">Edit user</h3>
             <div className="mt-4 space-y-3">
               <input value={editForm.username} onChange={(e) => setEditForm((form) => ({ ...form, username: e.target.value }))} placeholder="Username" className="w-full rounded-lg border px-3 py-2 text-sm" required />
               <input type="email" value={editForm.email} onChange={(e) => setEditForm((form) => ({ ...form, email: e.target.value }))} placeholder="Email" className="w-full rounded-lg border px-3 py-2 text-sm" required />
@@ -340,7 +340,7 @@ export default function AdminAccounts() {
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button type="button" onClick={() => setEditingUser(null)} className="rounded-lg border px-4 py-2 text-sm">Huy</button>
-              <button type="submit" disabled={saving} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-70">
+              <button type="submit" disabled={saving} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-70">
                 {saving ? 'Dang luu...' : 'Luu'}
               </button>
             </div>

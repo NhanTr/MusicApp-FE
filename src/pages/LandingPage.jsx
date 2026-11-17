@@ -1,76 +1,83 @@
 import { Link } from "react-router-dom";
-import { Music, Play, Heart, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  ArrowUpRight,
+  AudioLines,
+  Headphones,
+  Heart,
+  Upload,
+} from "lucide-react";
 import AppHeader from "@/components/AppHeader";
-
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50">
+    <div className="landing-page">
       <AppHeader showActions />
-
-      {/* Hero */}
-      <div className="pt-12 pb-20 px-4">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <h1 className="text-6xl font-bold text-gray-900 leading-tight">
-            Phát nhạc của bạn,
-            <span className="text-red-600"> Cách của bạn</span>
-          </h1>
-
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            MusicFlow là ứng dụng phát nhạc hiện đại cho phép bạn tải lên, quản lý và phát những bài hát yêu thích mà không bị giới hạn.
-          </p>
-
-          <div className="flex gap-4 justify-center pt-4">
-            <Link to="/signup">
-              <Button className="bg-red-600 hover:bg-red-700 text-white text-lg px-8 py-6">
-                <Play className="w-5 h-5 mr-2" />
-                Bắt đầu miễn phí
-              </Button>
-            </Link>
+      <main>
+        <section className="landing-hero">
+          <div>
+            <p className="eyebrow">
+              <i />
+              KHÔNG GIAN ÂM NHẠC CỦA RIÊNG BẠN
+            </p>
+            <h1>
+              Ít ồn ào hơn.
+              <br />
+              Nhiều <em>âm nhạc</em> hơn.
+            </h1>
+            <p>
+              Tìm những giai điệu mới. Giữ lại những bài hát yêu thích. Và dành
+              một chút thời gian cho chính mình.
+            </p>
+            <div className="landing-cta">
+              <Link to="/signup" className="primary-button">
+                Bắt đầu lắng nghe
+                <ArrowUpRight size={17} />
+              </Link>
+              <span>Thế giới âm nhạc của bạn.</span>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Features */}
-      <div className="py-20 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">
-            Tính năng nổi bật
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            
-            <div className="p-8 bg-gradient-to-br from-red-50 to-red-100 rounded-xl text-center">
-              <Upload className="w-12 h-12 text-red-600 mx-auto mb-4" />
-              <h3 className="text-xl font-bold mb-3">Tải Nhạc Của Bạn</h3>
-              <p className="text-gray-600">
-                Tải những bài hát yêu thích lên và xây dựng thư viện nhạc riêng
-              </p>
+          <div className="landing-record" aria-label="Đĩa nhạc MusicFlow">
+            <div className="vinyl-art">
+              <div className="vinyl-center">
+                <AudioLines />
+                <span>MUSICFLOW</span>
+              </div>
             </div>
-
-            <div className="p-8 bg-gradient-to-br from-red-50 to-red-100 rounded-xl text-center">
-              <Play className="w-12 h-12 text-red-600 mx-auto mb-4" />
-              <h3 className="text-xl font-bold mb-3">Phát Nhạc Hoàn Hảo</h3>
-              <p className="text-gray-600">
-                Điều khiển phát nhạc với đầy đủ tính năng
-              </p>
-            </div>
-
-            <div className="p-8 bg-gradient-to-br from-red-50 to-red-100 rounded-xl text-center">
-              <Heart className="w-12 h-12 text-red-600 mx-auto mb-4" />
-              <h3 className="text-xl font-bold mb-3">Yêu Thích & Chia Sẻ</h3>
-              <p className="text-gray-600">
-                Tạo playlist và chia sẻ âm nhạc
-              </p>
-            </div>
-
+            <p>
+              <span>YOUR LISTENING ROOM</span>
+              <span>VOL. 01</span>
+            </p>
           </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 text-center">
-        <p>&copy; 2026 MusicFlow</p>
+        </section>
+        <section className="landing-features">
+          <div>
+            <Headphones />
+            <h2>Đắm mình trong giai điệu</h2>
+            <p>
+              Khám phá nghệ sĩ, album và những ca khúc đang được yêu thích. Một
+              thế giới âm nhạc trong tầm tay.
+            </p>
+          </div>
+          <div>
+            <Heart />
+            <h2>Giữ những điều bạn yêu</h2>
+            <p>
+              Lưu bài hát yêu thích và xây dựng playlist cho từng tâm trạng,
+              từng khoảnh khắc của riêng bạn.
+            </p>
+          </div>
+          <div>
+            <Upload />
+            <h2>Chia sẻ âm nhạc của bạn</h2>
+            <p>
+              Tải lên những giai điệu bạn muốn chia sẻ. Để âm nhạc kết nối những
+              người cùng cảm hứng.
+            </p>
+          </div>
+        </section>
+      </main>
+      <footer className="public-footer">
+        <span>© 2026 MusicFlow</span>
+        <span>MADE FOR LISTENING ↗</span>
       </footer>
     </div>
   );

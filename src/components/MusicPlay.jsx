@@ -1,494 +1,504 @@
-import { useEffect, useRef, useState } from 'react'
-import { Play, Pause, SkipBack, SkipForward, Volume2, ChevronUp, ChevronDown, X, ListMusic, Loader2, Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { apiUtils, playlistsApi } from '@/lib/api'
-import { useListenTracker } from '@/hooks/useListenTracker'
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  AudioLines,
+  ListMusic,
+  Loader2,
+  Pause,
+  Play,
+  Plus,
+  Repeat,
+  Repeat1,
+  Shuffle,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  VolumeX,
+  X,
+} from "lucide-react";
+import { apiUtils, playlistsApi } from "@/lib/api";
+import { useMusic } from "@/contexts/MusicContext";
+import { useListenTracker } from "@/hooks/useListenTracker";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
+import {
+  resolveSongArtistName,
+  resolveSongId,
+  resolveSongTitle,
+} from "@/lib/song-utils";
+import { formatTime } from "@/lib/format";
+import Artwork from "@/components/music/Artwork";
+import LikeButton from "@/components/LikeButton";
 
-function MusicPlay({ songs = [], currentSong: activeSong, onSongChange } = {}) {
-  const audioRef = useRef(null)
-  const [currentSongIndex, setCurrentSongIndex] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(1)
-  const [isShuffling, setIsShuffling] = useState(false)
-  const [repeatMode, setRepeatMode] = useState('none')
-  const [showLyrics, setShowLyrics] = useState(false)
-  const [isMinimized, setIsMinimized] = useState(false)
-  const [queue, setQueue] = useState(songs)
-  const [showAddToPlaylist, setShowAddToPlaylist] = useState(false)
-  const [playlists, setPlaylists] = useState([])
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState('')
-  const [playlistsLoading, setPlaylistsLoading] = useState(false)
-  const [addingToPlaylist, setAddingToPlaylist] = useState(false)
-  const [playlistMessage, setPlaylistMessage] = useState({ type: '', text: '' })
-
-  const currentSong = activeSong || queue[currentSongIndex] || songs[0]
-
+function QueuePanel({ onClose }) {
+  const {
+    queue,
+    currentSong,
+    selectQueueSong,
+    isShuffling,
+    toggleShuffle,
+    repeatMode,
+    setRepeatMode,
+  } = useMusic();
+  const panelRef = useDialogFocus(true, onClose);
+  const index = queue.findIndex(
+    (s) => resolveSongId(s) === resolveSongId(currentSong),
+  );
+  const upcoming = queue.slice(index + 1);
+  return (
+    <section
+      className="queue-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="queue-title"
+      ref={panelRef}
+    >
+      <header>
+        <h2 id="queue-title">Hàng đợi của bạn</h2>
+        <button
+          className="icon-button"
+          onClick={onClose}
+          aria-label="Đóng hàng đợi"
+        >
+          <X size={20} />
+        </button>
+      </header>
+      <p className="eyebrow">ĐANG ĐƯỢC CHỌN</p>
+      {currentSong && (
+        <div className="queue-current">
+          <Artwork
+            src={currentSong.coverUrl}
+            title={resolveSongTitle(currentSong)}
+          />
+          <div className="min-w-0 flex-1">
+            <strong className="block truncate">
+              {resolveSongTitle(currentSong)}
+            </strong>
+            <p className="truncate">{resolveSongArtistName(currentSong)}</p>
+          </div>
+          <AudioLines size={17} className="text-primary" />
+        </div>
+      )}
+      <div className="flex items-center justify-between">
+        <p className="eyebrow">TIẾP THEO · {upcoming.length} BÀI HÁT</p>
+        <button
+          className={`icon-button queue-shuffle-control ${isShuffling ? "is-active" : ""}`}
+          onClick={toggleShuffle}
+          aria-label="Ngẫu nhiên hàng đợi"
+          aria-pressed={isShuffling}
+        >
+          <Shuffle size={17} />
+        </button>
+        <button
+          className={`icon-button ${repeatMode !== "none" ? "is-active" : ""}`}
+          aria-label={`Chế độ lặp lại: ${repeatMode}`}
+          onClick={() =>
+            setRepeatMode((mode) =>
+              mode === "none" ? "all" : mode === "all" ? "one" : "none",
+            )
+          }
+        >
+          {repeatMode === "one" ? <Repeat1 size={17} /> : <Repeat size={17} />}
+        </button>
+      </div>
+      <div className="queue-scroll">
+        {upcoming.length ? (
+          upcoming.map((song, i) => (
+            <button
+              className="queue-item"
+              key={resolveSongId(song)}
+              onClick={() => selectQueueSong(song)}
+            >
+              <span>{String(index + i + 2).padStart(2, "0")}</span>
+              <div>
+                <strong>{resolveSongTitle(song)}</strong>
+                <small>{resolveSongArtistName(song)}</small>
+              </div>
+              <span>{formatTime(song.duration)}</span>
+            </button>
+          ))
+        ) : (
+          <p className="py-10 text-center text-xs text-muted-foreground">
+            Bạn đã đến cuối bộ sưu tập.
+          </p>
+        )}
+      </div>
+      {isShuffling && (
+        <p className="queue-shuffle-note">ĐANG BẬT CHẾ ĐỘ PHÁT NGẪU NHIÊN</p>
+      )}
+    </section>
+  );
+}
+function PlaylistDialog({ song, onClose }) {
+  const [playlists, setPlaylists] = useState([]),
+    [loading, setLoading] = useState(true),
+    [selected, setSelected] = useState(""),
+    [saving, setSaving] = useState(false),
+    [message, setMessage] = useState("");
+  const panelRef = useDialogFocus(true, onClose);
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setQueue(songs)
-    }, 0)
-
-    return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [songs])
-
-  useListenTracker(
-		audioRef,
-		currentSong
-	)
-
-
-  useEffect(() => {
-    if (!activeSong) {
-      return
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      const nextQueue = [activeSong, ...songs.filter((song) => song?.id !== activeSong?.id)]
-      setQueue(nextQueue)
-      setCurrentSongIndex(0)
-    }, 0)
-
-    return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [activeSong, songs])
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume
-    }
-  }, [volume])
-
-  useEffect(() => {
-    if (!showAddToPlaylist) {
-      return
-    }
-
-    let isActive = true
-
-    async function loadPlaylists() {
-      setPlaylistsLoading(true)
-      setPlaylistMessage({ type: '', text: '' })
-
-      try {
-        const data = await playlistsApi.getPlaylists({ size: 100 })
-        if (!isActive) return
-
-        const items = apiUtils.extractList(data)
-        setPlaylists(items)
-        setSelectedPlaylistId((prev) => prev || items[0]?.id || items[0]?._id || '')
-      } catch (error) {
-        if (!isActive) return
-        setPlaylistMessage({ type: 'error', text: error.message || 'Không tải được danh sách playlist.' })
-      } finally {
-        if (isActive) {
-          setPlaylistsLoading(false)
+    let active = true;
+    playlistsApi
+      .getPlaylists({ size: 100 })
+      .then((data) => {
+        if (active) {
+          const items = apiUtils.extractList(data);
+          setPlaylists(items);
+          setSelected(items[0]?.id || "");
         }
-      }
-    }
-
-    loadPlaylists()
-
+      })
+      .catch((error) => {
+        if (active) setMessage(error.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => {
-      isActive = false
-    }
-  }, [showAddToPlaylist])
-
-  useEffect(() => {
-    if (currentSong && audioRef.current) {
-      audioRef.current.src = currentSong.fileUrl || currentSong.url || ''
-      if (isPlaying) {
-        audioRef.current.play()
-      }
-    }
-  }, [currentSong, isPlaying])
-
-  function togglePlay() {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause()
-      } else {
-        audioRef.current.play()
-      }
-      setIsPlaying(!isPlaying)
-    }
-  }
-
-  function nextSong() {
-    let nextIndex = currentSongIndex + 1
-    if (nextIndex >= queue.length) {
-      nextIndex = 0
-    }
-    setCurrentSongIndex(nextIndex)
-    onSongChange?.(queue[nextIndex])
-  }
-
-  function prevSong() {
-    let prevIndex = currentSongIndex - 1
-    if (prevIndex < 0) {
-      prevIndex = queue.length - 1
-    }
-    setCurrentSongIndex(prevIndex)
-    onSongChange?.(queue[prevIndex])
-  }
-
-  function toggleShuffle() {
-    if (isShuffling) {
-      setQueue([...songs])
-      setCurrentSongIndex(0)
-    } else {
-      const shuffled = [...songs].sort(() => Math.random() - 0.5)
-      setQueue(shuffled)
-      setCurrentSongIndex(0)
-    }
-    setIsShuffling(!isShuffling)
-  }
-
-  function toggleRepeat() {
-    const modes = ['none', 'one', 'all']
-    const currentIndex = modes.indexOf(repeatMode)
-    setRepeatMode(modes[(currentIndex + 1) % modes.length])
-  }
-
-  function handleTimeUpdate() {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime)
-    }
-  }
-
-  function handleLoadedMetadata() {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration)
-    }
-  }
-
-  async function handleAddSongToPlaylist() {
-    if (!selectedPlaylistId || !currentSong) {
-      setPlaylistMessage({ type: 'error', text: 'Vui lòng chọn playlist hợp lệ.' })
-      return
-    }
-
-    const songId = currentSong.id || currentSong._id
-    if (!songId) {
-      setPlaylistMessage({ type: 'error', text: 'Không xác định được bài hát hiện tại.' })
-      return
-    }
-
-    setAddingToPlaylist(true)
-    setPlaylistMessage({ type: '', text: '' })
-
+      active = false;
+    };
+  }, []);
+  async function add() {
+    setSaving(true);
+    setMessage("");
     try {
-      await playlistsApi.addSongIntoPlaylist(selectedPlaylistId, { songId })
-      setPlaylistMessage({ type: 'success', text: 'Đã thêm bài hát vào playlist.' })
+      await playlistsApi.addSongIntoPlaylist(selected, {
+        songId: resolveSongId(song),
+      });
+      setMessage("Đã thêm bài hát vào playlist.");
     } catch (error) {
-      setPlaylistMessage({ type: 'error', text: error.message || 'Không thêm được bài hát vào playlist.' })
+      setMessage(error.message || "Không thêm được bài hát.");
     } finally {
-      setAddingToPlaylist(false)
+      setSaving(false);
     }
   }
-
-  function openPlaylistDialog() {
-    setPlaylistMessage({ type: '', text: '' })
-    setShowAddToPlaylist(true)
+  return (
+    <div
+      className="dialog-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <section
+        className="music-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="playlist-dialog-title"
+        ref={panelRef}
+      >
+        <header>
+          <h2 id="playlist-dialog-title">Lưu vào playlist</h2>
+          <button className="icon-button" onClick={onClose} aria-label="Đóng">
+            <X size={19} />
+          </button>
+        </header>
+        <p>{resolveSongTitle(song)}</p>
+        {loading ? (
+          <p role="status">Đang tải playlist…</p>
+        ) : playlists.length ? (
+          <>
+            <label className="eyebrow" htmlFor="player-playlist">
+              CHỌN PLAYLIST
+            </label>
+            <select
+              id="player-playlist"
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+            >
+              {playlists.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </>
+        ) : (
+          <p>Bạn chưa có playlist. Hãy tạo playlist trong thư viện.</p>
+        )}
+        {message && (
+          <p className="mt-4" role="status">
+            {message}
+          </p>
+        )}
+        <footer>
+          <button className="secondary-button" onClick={onClose}>
+            Đóng
+          </button>
+          <button
+            className="primary-button"
+            onClick={add}
+            disabled={!selected || saving}
+          >
+            {saving ? (
+              <Loader2 size={16} className="loading-pulse" />
+            ) : (
+              <Plus size={16} />
+            )}
+            Thêm bài hát
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+export default function MusicPlay() {
+  const {
+    currentSong,
+    queue,
+    isPlaying,
+    setIsPlaying,
+    isShuffling,
+    toggleShuffle,
+    repeatMode,
+    setRepeatMode,
+    nextSong,
+    previousSong,
+  } = useMusic();
+  const audioRef = useRef(null);
+  const [time, setTime] = useState(0),
+    [duration, setDuration] = useState(0),
+    [volume, setVolume] = useState(0.75),
+    [queueOpen, setQueueOpen] = useState(false),
+    [playlistOpen, setPlaylistOpen] = useState(false),
+    [error, setError] = useState("");
+  const closeQueue = useCallback(() => setQueueOpen(false), []),
+    closePlaylist = useCallback(() => setPlaylistOpen(false), []);
+  const source = currentSong?.fileUrl || currentSong?.url || "";
+  useListenTracker(audioRef, currentSong);
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    let active = true;
+    if (isPlaying && source) {
+      const attempt = audio.play();
+      attempt?.catch((e) => {
+        if (active && e.name !== "AbortError") {
+          setError(
+            "Không thể phát bài hát này. Hãy thử lại hoặc chọn bài khác.",
+          );
+          setIsPlaying(false);
+        }
+      });
+    } else audio.pause();
+    return () => {
+      active = false;
+    };
+  }, [source, isPlaying, setIsPlaying]);
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume;
+  }, [volume]);
+  useEffect(() => {
+    function shortcut(event) {
+      if (
+        event.code !== "Space" ||
+        event.repeat ||
+        queueOpen ||
+        playlistOpen ||
+        event.target.closest(
+          'button,a,input,textarea,select,[contenteditable="true"]',
+        )
+      )
+        return;
+      event.preventDefault();
+      if (source) setIsPlaying((value) => !value);
+    }
+    window.addEventListener("keydown", shortcut);
+    return () => window.removeEventListener("keydown", shortcut);
+  }, [source, setIsPlaying, queueOpen, playlistOpen]);
+  function ended() {
+    if (repeatMode === "one" || (repeatMode === "all" && queue.length === 1)) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play()?.catch(() => setIsPlaying(false));
+    } else nextSong(true);
   }
-
-  function closePlaylistDialog() {
-    setShowAddToPlaylist(false)
-    setPlaylistMessage({ type: '', text: '' })
+  function previous() {
+    if (audioRef.current?.currentTime > 3) {
+      audioRef.current.currentTime = 0;
+      return;
+    }
+    previousSong();
   }
-
-  function handleEnded() {
-    if (repeatMode === 'one') {
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0
-        audioRef.current.play()
-      }
-    } else {
-      nextSong()
+  function seek(value) {
+    if (audioRef.current && Number.isFinite(audioRef.current.duration)) {
+      audioRef.current.currentTime = Number(value);
+      setTime(Number(value));
     }
   }
-
-  function handleSeek(e) {
-    const newTime = parseFloat(e.target.value)
-    setCurrentTime(newTime)
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime
-    }
-  }
-
-  function formatTime(time) {
-    if (!time || isNaN(time)) return '0:00'
-    const minutes = Math.floor(time / 60)
-    const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`
-  }
-
-  function getArtistName(song) {
-    if (!song) return 'Unknown artist'
-    if (typeof song.artist === 'string') return song.artist
-    if (song.artist && typeof song.artist === 'object') {
-      return song.artist.name || 'Unknown artist'
-    }
-    return 'Unknown artist'
-  }
-
-  if (!currentSong) {
-    return <div className="text-center p-4 text-gray-500">Không có bài hát nào</div>
-  }
-
+  const toggle = () => {
+    setError("");
+    if (source) setIsPlaying((value) => !value);
+  };
+  const ready = !!source;
   return (
     <>
       <audio
         ref={audioRef}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={handleEnded}
+        src={source || undefined}
+        preload="metadata"
+        onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
+        onLoadedMetadata={(e) => {
+          setDuration(
+            Number.isFinite(e.currentTarget.duration)
+              ? e.currentTarget.duration
+              : 0,
+          );
+          setTime(0);
+          setError("");
+        }}
+        onEnded={ended}
+        onError={() => {
+          if (source) {
+            setError("Không tải được tệp âm thanh. Vui lòng chọn bài khác.");
+            setIsPlaying(false);
+          }
+        }}
       />
-      {/* Player Bar */}
-      <div className="fixed bottom-2 left-6 right-2 md:bottom-3 md:left-[calc(16rem+3rem)] md:right-10 xl:left-[calc(16rem+3.5rem)] xl:right-14 bg-gradient-to-t from-red-800 to-red-700 text-white shadow-xl z-40 rounded-lg md:rounded-xl">
-        {/* Minimized View */}
-        {isMinimized && (
-          <div className="px-3 py-2 flex items-center justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold truncate text-sm text-white">{currentSong.title}</p>
-              <p className="text-xs text-red-100 truncate">{getArtistName(currentSong)}</p>
-            </div>
-            <Button
-              onClick={togglePlay}
-              className="h-7 min-w-7 px-2 bg-white text-red-700 hover:bg-red-100 font-semibold"
-            >
-              {isPlaying ? (
-                <Pause className="w-4 h-4" />
-              ) : (
-                <Play className="w-4 h-4 ml-0.5" />
-              )}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setIsMinimized(false)}
-              className="h-7 w-7 shrink-0 p-0 text-white hover:bg-red-700"
-              title="Expand"
-            >
-              <ChevronUp className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
-
-        {/* Expanded View */}
-        {!isMinimized && (
-          <>
-        {/* Progress Bar */}
-        <div className="px-2.5 pt-1.5 pb-1 md:px-3 md:pt-2 md:pb-1.5">
-          <input
-            type="range"
-            min="0"
-            max={duration || 0}
-            value={currentTime}
-            onChange={handleSeek}
-            className="w-full h-0.5 bg-red-600 rounded-full appearance-none cursor-pointer accent-red-200"
-          />
-          <div className="flex justify-between text-[9px] md:text-[10px] text-red-100 mt-0.5">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
-
-        {/* Main Player Controls */}
-        <div className="px-2.5 py-2 md:px-3 md:py-2.5 flex items-center justify-between gap-2 md:gap-3">
-          {/* Song Info */}
-          <div className="flex-1 min-w-0 max-w-[28%] md:max-w-none">
-            <p className="font-semibold truncate text-xs md:text-sm text-white">{currentSong.title}</p>
-            <p className="text-[10px] md:text-xs text-red-100 truncate">{getArtistName(currentSong)}</p>
-          </div>
-
-          {/* Controls */}
-          <div className="flex items-center gap-0.5 md:gap-1">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={toggleShuffle}
-              className={`h-6 w-6 p-0 md:h-7 md:w-7 md:p-0 text-white hover:bg-red-700 ${isShuffling ? 'bg-red-700' : ''}`}
-              title="Shuffle"
-            >
-              <span className="text-[10px] md:text-xs">⇄</span>
-            </Button>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={prevSong}
-              className="h-6 w-6 p-0 md:h-7 md:w-7 md:p-0 text-white hover:bg-red-700"
-            >
-              <SkipBack className="w-3 h-3 md:w-3.5 md:h-3.5" />
-            </Button>
-
-            <Button
-              onClick={togglePlay}
-              className="h-7 min-w-7 md:h-8 md:min-w-8 px-2 md:px-2.5 bg-white text-red-700 hover:bg-red-100 font-semibold"
-            >
-              {isPlaying ? (
-                <Pause className="w-3.5 h-3.5 md:w-4 md:h-4" />
-              ) : (
-                <Play className="w-3.5 h-3.5 md:w-4 md:h-4 ml-0.5" />
-              )}
-            </Button>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={nextSong}
-              className="h-6 w-6 p-0 md:h-7 md:w-7 md:p-0 text-white hover:bg-red-700"
-            >
-              <SkipForward className="w-3 h-3 md:w-3.5 md:h-3.5" />
-            </Button>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={toggleRepeat}
-              className={`h-6 w-6 p-0 md:h-7 md:w-7 md:p-0 text-white hover:bg-red-700 ${repeatMode !== 'none' ? 'bg-red-700' : ''}`}
-              title={`Repeat: ${repeatMode}`}
-            >
-              <span className="text-[10px] md:text-xs">{repeatMode === 'one' ? '🔂' : '🔁'}</span>
-            </Button>
-          </div>
-
-          {/* Volume & Lyrics */}
-          <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
-            <div className="flex items-center gap-1 w-10 sm:w-12 md:w-14 lg:w-16 xl:w-20">
-              <Volume2 className="w-3 h-3 md:w-3.5 md:h-3.5" />
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="w-20 h-0.5 bg-red-600 rounded-full appearance-none cursor-pointer accent-red-200"
-              />
-            </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={openPlaylistDialog}
-              className="h-6 w-6 p-0 md:h-7 md:w-7 md:p-0 text-white hover:bg-red-700"
-              title="Thêm vào playlist"
-            >
-              <ListMusic className="w-3 h-3 md:w-3.5 md:h-3.5" />
-            </Button>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setIsMinimized(true)}
-              className="h-6 w-6 p-0 md:h-7 md:w-7 md:p-0 text-white hover:bg-red-700"
-              title="Minimize"
-            >
-              <ChevronDown className="w-3 h-3 md:w-3.5 md:h-3.5" />
-            </Button>
-          </div>
-        </div>
-          </>
-        )}
-      </div>
-
-      {showAddToPlaylist && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-600">Playlist của bạn</p>
-                <h3 className="mt-1 text-lg font-bold text-slate-900">Thêm bài hát vào playlist</h3>
-                <p className="mt-1 text-sm text-slate-500 truncate">{currentSong.title}</p>
-              </div>
-              <button
-                type="button"
-                onClick={closePlaylistDialog}
-                className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                aria-label="Close playlist dialog"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-slate-700" htmlFor="playlist-select">
-                Chọn playlist
-              </label>
-              <select
-                id="playlist-select"
-                value={selectedPlaylistId}
-                onChange={(e) => setSelectedPlaylistId(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-red-300"
-                disabled={playlistsLoading || !playlists.length}
-              >
-                {!playlists.length && <option value="">Không có playlist nào</option>}
-                {playlists.map((playlist) => {
-                  const playlistId = playlist.id || playlist._id
-                  return (
-                    <option key={playlistId} value={playlistId}>
-                      {playlist.name || playlist.title || 'Untitled playlist'}
-                    </option>
-                  )
-                })}
-              </select>
-
-              {playlistsLoading && (
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Đang tải playlist...
-                </div>
-              )}
-
-              {!playlistsLoading && !playlists.length && (
-                <p className="text-sm text-slate-500">Bạn chưa có playlist nào. Hãy tạo playlist trước khi thêm bài hát.</p>
-              )}
-
-              {playlistMessage.text && (
-                <p className={`text-sm ${playlistMessage.type === 'success' ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {playlistMessage.text}
-                </p>
-              )}
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={closePlaylistDialog}
-                  className="border-slate-200 text-slate-700 hover:bg-slate-50"
-                >
-                  Đóng
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleAddSongToPlaylist}
-                  disabled={addingToPlaylist || playlistsLoading || !playlists.length}
-                  className="bg-red-600 text-white hover:bg-red-700"
-                >
-                  {addingToPlaylist ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Đang thêm...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Thêm vào playlist
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {queueOpen && <QueuePanel onClose={closeQueue} />}
+      {playlistOpen && currentSong && (
+        <PlaylistDialog song={currentSong} onClose={closePlaylist} />
       )}
+      <section className="music-player" aria-label="Trình phát nhạc">
+        {error && (
+          <p className="player-error" role="alert">
+            {error}
+            <button
+              aria-label="Ẩn thông báo"
+              className="ml-3"
+              onClick={() => setError("")}
+            >
+              ×
+            </button>
+          </p>
+        )}
+        <div className="player-song">
+          <Artwork
+            className="player-art"
+            src={currentSong?.coverUrl}
+            title={currentSong ? resolveSongTitle(currentSong) : "MusicFlow"}
+          />
+          <div className="player-song-info">
+            <strong>
+              {currentSong
+                ? resolveSongTitle(currentSong)
+                : "Chọn một giai điệu"}
+            </strong>
+            <span>
+              {currentSong
+                ? resolveSongArtistName(currentSong)
+                : "Âm nhạc đang chờ bạn"}
+            </span>
+          </div>
+          {currentSong && <LikeButton songId={resolveSongId(currentSong)} />}
+        </div>
+        <div className="player-center">
+          <div className="player-buttons">
+            <button
+              className={`icon-button shuffle-control ${isShuffling ? "is-active" : ""}`}
+              onClick={toggleShuffle}
+              disabled={!currentSong}
+              aria-label="Phát ngẫu nhiên"
+              aria-pressed={isShuffling}
+            >
+              <Shuffle size={16} />
+            </button>
+            <button
+              className="icon-button"
+              onClick={previous}
+              disabled={!ready}
+              aria-label="Bài trước"
+            >
+              <SkipBack size={17} fill="currentColor" />
+            </button>
+            <button
+              className="player-toggle"
+              onClick={toggle}
+              disabled={!ready}
+              aria-label={isPlaying ? "Tạm dừng" : "Phát nhạc"}
+            >
+              {isPlaying ? (
+                <Pause size={17} fill="currentColor" />
+              ) : (
+                <Play size={17} fill="currentColor" className="ml-0.5" />
+              )}
+            </button>
+            <button
+              className="icon-button"
+              onClick={() => nextSong()}
+              disabled={!ready}
+              aria-label="Bài tiếp theo"
+            >
+              <SkipForward size={17} fill="currentColor" />
+            </button>
+            <button
+              className={`icon-button repeat-control ${repeatMode !== "none" ? "is-active" : ""}`}
+              onClick={() =>
+                setRepeatMode((mode) =>
+                  mode === "none" ? "all" : mode === "all" ? "one" : "none",
+                )
+              }
+              disabled={!ready}
+              aria-label={`Lặp lại: ${repeatMode}`}
+              title={`Lặp lại: ${repeatMode}`}
+            >
+              {repeatMode === "one" ? (
+                <Repeat1 size={16} />
+              ) : (
+                <Repeat size={16} />
+              )}
+            </button>
+          </div>
+          <div className="player-progress">
+            <span>{formatTime(time)}</span>
+            <input
+              type="range"
+              min="0"
+              max={duration || 0}
+              step=".1"
+              value={Math.min(time, duration || 0)}
+              onChange={(e) => seek(e.target.value)}
+              disabled={!duration}
+              aria-label="Vị trí phát"
+            />
+            <span>{formatTime(duration || currentSong?.duration)}</span>
+          </div>
+        </div>
+        <div className="player-tools">
+          <span className="player-quality">STEREO</span>
+          <button
+            className="icon-button playlist-control"
+            onClick={() => {
+              setQueueOpen(false);
+              setPlaylistOpen(true);
+            }}
+            disabled={!currentSong}
+            aria-label="Thêm vào playlist"
+          >
+            <Plus size={17} />
+          </button>
+          <button
+            className={`icon-button ${queueOpen ? "is-active" : ""}`}
+            onClick={() => setQueueOpen((value) => !value)}
+            aria-label="Mở hàng đợi"
+            aria-expanded={queueOpen}
+          >
+            <ListMusic size={18} />
+          </button>
+          <div className="player-volume">
+            <button
+              onClick={() => setVolume((v) => (v ? 0 : 0.75))}
+              aria-label={volume ? "Tắt tiếng" : "Bật tiếng"}
+            >
+              {volume ? <Volume2 size={17} /> : <VolumeX size={17} />}
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step=".05"
+              value={volume}
+              onChange={(e) => setVolume(Number(e.target.value))}
+              aria-label="Âm lượng"
+            />
+          </div>
+        </div>
+      </section>
     </>
-  )
+  );
 }
-
-export default MusicPlay

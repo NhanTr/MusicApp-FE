@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Edit, Plus, Search, Trash2} from 'lucide-react'
 import { toast } from 'sonner'
 import { apiUtils, artistsApi } from '@/lib/api'
@@ -42,7 +42,7 @@ export default function AdminArtists() {
     return () => window.clearTimeout(timeoutId)
   }, [query])
 
-  async function loadArtists() {
+  const loadArtists = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
@@ -60,11 +60,12 @@ export default function AdminArtists() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, debouncedQuery])
 
   useEffect(() => {
-    loadArtists()
-  }, [page, debouncedQuery])
+    const timer = setTimeout(loadArtists, 0)
+    return () => clearTimeout(timer)
+  }, [loadArtists])
 
   async function submitArtist(e) {
     e.preventDefault()
@@ -149,45 +150,45 @@ export default function AdminArtists() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-bold text-slate-900">Nghe si</h2>
-        <button onClick={() => setShowForm((value) => !value)} className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+        <h2 className="text-xl font-bold text-foreground">Nghe si</h2>
+        <button onClick={() => setShowForm((value) => !value)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary">
           <Plus className="h-4 w-4" /> Them nghe si
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={submitArtist} className="grid gap-3 rounded-xl border border-red-200 bg-red-50 p-4 md:grid-cols-3">
+        <form onSubmit={submitArtist} className="grid gap-3 rounded-xl border border-primary/30 bg-primary/10 p-4 md:grid-cols-3">
           <input value={form.name} onChange={(e) => setForm((value) => ({ ...value, name: e.target.value }))} placeholder="Ten nghe si *" className="rounded-lg border px-3 py-2 text-sm" required />
           <input value={form.bio} onChange={(e) => setForm((value) => ({ ...value, bio: e.target.value }))} placeholder="Tieu su" className="rounded-lg border px-3 py-2 text-sm" />
           <input value={form.avatarUrl} onChange={(e) => setForm((value) => ({ ...value, avatarUrl: e.target.value }))} placeholder="Avatar URL" className="rounded-lg border px-3 py-2 text-sm" />
           <div className="flex gap-2 md:col-span-3">
-            <button type="submit" disabled={saving} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-70">{saving ? 'Dang them...' : 'Luu nghe si'}</button>
+            <button type="submit" disabled={saving} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-70">{saving ? 'Dang them...' : 'Luu nghe si'}</button>
             <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border px-4 py-2 text-sm">Huy</button>
           </div>
         </form>
       )}
 
       <div className="relative">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tim nghe si..." className="w-full rounded-lg border px-9 py-2 text-sm" />
       </div>
 
 
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
-        {loading ? <p className="text-sm text-slate-500">Dang tai...</p> : (
+      <section className="rounded-xl border bg-card p-4 shadow-none">
+        {loading ? <p className="text-sm text-muted-foreground">Dang tai...</p> : (
           <div className="space-y-2">
-            {artists.length === 0 && <p className="text-sm text-slate-500">Khong co nghe si phu hop.</p>}
+            {artists.length === 0 && <p className="text-sm text-muted-foreground">Khong co nghe si phu hop.</p>}
             {artists.map((artist) => (
-              <div key={getId(artist)} className="flex items-center justify-between rounded-xl border bg-white px-4 py-3">
+              <div key={getId(artist)} className="flex items-center justify-between rounded-xl border bg-card px-4 py-3">
                 <div>
-                  <p className="text-sm font-medium text-slate-800">{artist?.name || 'Khong ten'}</p>
-                  <p className="line-clamp-1 text-xs text-slate-500">{artist?.bio || 'Chua co tieu su'}</p>
+                  <p className="text-sm font-medium text-foreground">{artist?.name || 'Khong ten'}</p>
+                  <p className="line-clamp-1 text-xs text-muted-foreground">{artist?.bio || 'Chua co tieu su'}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => openEdit(artist)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs text-slate-700 hover:bg-slate-50">
+                  <button onClick={() => openEdit(artist)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs text-foreground hover:bg-secondary">
                     <Edit className="h-3 w-3" /> Edit
                   </button>
-                  <button onClick={() => handleDelete(artist)} disabled={deletingId === getId(artist)} className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50">
+                  <button onClick={() => handleDelete(artist)} disabled={deletingId === getId(artist)} className="inline-flex items-center gap-1 rounded-lg border border-primary/30 px-3 py-1 text-xs text-primary hover:bg-primary/10 disabled:opacity-50">
                     <Trash2 className="h-3 w-3" /> {deletingId === getId(artist) ? 'Dang xoa...' : 'Xoa'}
                   </button>
                 </div>
@@ -197,22 +198,22 @@ export default function AdminArtists() {
         )}
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-          <span className="text-slate-500">Tong: {pageData.totalElements}</span>
+          <span className="text-muted-foreground">Tong: {pageData.totalElements}</span>
           <div className="flex items-center gap-2">
             <button disabled={page === 0 || loading} onClick={() => setPage((value) => Math.max(0, value - 1))} className="rounded-lg border px-3 py-1 disabled:opacity-50">Prev</button>
             {pageNumbers.map((pageNumber) => (
-              <button key={pageNumber} onClick={() => setPage(pageNumber)} className={['rounded-lg border px-3 py-1', pageNumber === page ? 'border-red-600 bg-red-600 text-white' : 'hover:bg-slate-50'].join(' ')}>{pageNumber + 1}</button>
+              <button key={pageNumber} onClick={() => setPage(pageNumber)} className={['rounded-lg border px-3 py-1', pageNumber === page ? 'border-primary bg-primary text-white' : 'hover:bg-secondary'].join(' ')}>{pageNumber + 1}</button>
             ))}
             <button disabled={page + 1 >= pageData.totalPages || loading} onClick={() => setPage((value) => value + 1)} className="rounded-lg border px-3 py-1 disabled:opacity-50">Next</button>
           </div>
         </div>
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-primary">{error}</p>}
       </section>
 
       {editingArtist && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <form onSubmit={submitEdit} className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">Edit artist</h3>
+          <form onSubmit={submitEdit} className="w-full max-w-lg rounded-xl bg-card p-5 shadow-xl">
+            <h3 className="text-lg font-semibold text-foreground">Edit artist</h3>
             <div className="mt-4 space-y-3">
               <input value={editForm.name} onChange={(e) => setEditForm((value) => ({ ...value, name: e.target.value }))} placeholder="Name" className="w-full rounded-lg border px-3 py-2 text-sm" required />
               <textarea value={editForm.bio} onChange={(e) => setEditForm((value) => ({ ...value, bio: e.target.value }))} placeholder="Bio" className="min-h-24 w-full rounded-lg border px-3 py-2 text-sm" />
@@ -220,7 +221,7 @@ export default function AdminArtists() {
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button type="button" onClick={() => setEditingArtist(null)} className="rounded-lg border px-4 py-2 text-sm">Huy</button>
-              <button type="submit" disabled={saving} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-70">{saving ? 'Dang luu...' : 'Luu'}</button>
+              <button type="submit" disabled={saving} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-70">{saving ? 'Dang luu...' : 'Luu'}</button>
             </div>
           </form>
         </div>

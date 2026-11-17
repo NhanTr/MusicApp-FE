@@ -197,51 +197,51 @@ export default function AdminAdmins() {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
+      <section className="rounded-xl border bg-card p-4 shadow-none">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Quan ly admin</h2>
-            <p className="mt-1 text-sm text-slate-500">Danh sach, tao moi, xoa va doi mat khau tai khoan admin.</p>
+            <h2 className="text-xl font-bold text-foreground">Quan ly admin</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Danh sach, tao moi, xoa va doi mat khau tai khoan admin.</p>
           </div>
-          <button onClick={() => setShowForm((value) => !value)} className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+          <button onClick={() => setShowForm((value) => !value)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary">
             <Plus className="h-4 w-4" /> Them admin
           </button>
         </div>
         <div className="relative mt-4">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tim admin..." className="w-full rounded-lg border px-9 py-2 text-sm" />
         </div>
       </section>
 
       {showForm && (
-        <form onSubmit={submitAdmin} className="grid gap-3 rounded-xl border border-red-200 bg-red-50 p-4 md:grid-cols-3">
+        <form onSubmit={submitAdmin} className="grid gap-3 rounded-xl border border-primary/30 bg-primary/10 p-4 md:grid-cols-3">
           <input value={form.username} onChange={(e) => setForm((value) => ({ ...value, username: e.target.value }))} placeholder="Username *" className="rounded-lg border px-3 py-2 text-sm" required />
           <input type="email" value={form.email} onChange={(e) => setForm((value) => ({ ...value, email: e.target.value }))} placeholder="Email *" className="rounded-lg border px-3 py-2 text-sm" required />
           <input type="password" value={form.password} onChange={(e) => setForm((value) => ({ ...value, password: e.target.value }))} placeholder="Password *" className="rounded-lg border px-3 py-2 text-sm" required />
           <div className="flex gap-2 md:col-span-3">
-            <button type="submit" disabled={saving} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-70">{saving ? 'Dang them...' : 'Luu admin'}</button>
+            <button type="submit" disabled={saving} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-70">{saving ? 'Dang them...' : 'Luu admin'}</button>
             <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border px-4 py-2 text-sm">Huy</button>
           </div>
         </form>
       )}
 
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
-        {loading ? <p className="text-sm text-slate-500">Dang tai danh sach admin...</p> : (
+      <section className="rounded-xl border bg-card p-4 shadow-none">
+        {loading ? <p className="text-sm text-muted-foreground">Dang tai danh sach admin...</p> : (
           <div className="space-y-2">
-            {admins.length === 0 && <p className="text-sm text-slate-500">Khong co admin phu hop.</p>}
+            {admins.length === 0 && <p className="text-sm text-muted-foreground">Khong co admin phu hop.</p>}
             {admins.map((admin) => {
               const adminId = getId(admin)
               return (
-                <div key={adminId} className="flex items-center justify-between rounded-xl border bg-white px-4 py-3">
+                <div key={adminId} className="flex items-center justify-between rounded-xl border bg-card px-4 py-3">
                   <div>
-                    <p className="text-sm font-medium text-slate-800">{admin?.username || admin?.name || 'No name'}</p>
-                    <p className="text-xs text-slate-500">{admin?.email || 'No email'}</p>
+                    <p className="text-sm font-medium text-foreground">{admin?.username || admin?.name || 'No name'}</p>
+                    <p className="text-xs text-muted-foreground">{admin?.email || 'No email'}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => openPasswordModal(admin)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs text-slate-700 hover:bg-slate-50">
+                    <button onClick={() => openPasswordModal(admin)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs text-foreground hover:bg-secondary">
                       <KeyRound className="h-3 w-3" /> Password
                     </button>
-                    <button onClick={() => handleDelete(admin)} disabled={deletingId === adminId} className="inline-flex items-center gap-1 rounded-lg border border-red-300 px-3 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-60">
+                    <button onClick={() => handleDelete(admin)} disabled={deletingId === adminId} className="inline-flex items-center gap-1 rounded-lg border border-primary/30 px-3 py-1 text-xs text-primary hover:bg-primary/10 disabled:opacity-60">
                       <Trash2 className="h-3 w-3" /> {deletingId === adminId ? 'Dang xoa...' : 'Xoa'}
                     </button>
                   </div>
@@ -252,30 +252,30 @@ export default function AdminAdmins() {
         )}
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-          <span className="text-slate-500">Tong: {pageData.totalElements}</span>
+          <span className="text-muted-foreground">Tong: {pageData.totalElements}</span>
           <div className="flex items-center gap-2">
             <button disabled={page === 0 || loading} onClick={() => setPage((value) => Math.max(0, value - 1))} className="rounded-lg border px-3 py-1 disabled:opacity-50">Prev</button>
             {pageNumbers.map((pageNumber) => (
-              <button key={pageNumber} onClick={() => setPage(pageNumber)} className={['rounded-lg border px-3 py-1', pageNumber === page ? 'border-red-600 bg-red-600 text-white' : 'hover:bg-slate-50'].join(' ')}>{pageNumber + 1}</button>
+              <button key={pageNumber} onClick={() => setPage(pageNumber)} className={['rounded-lg border px-3 py-1', pageNumber === page ? 'border-primary bg-primary text-white' : 'hover:bg-secondary'].join(' ')}>{pageNumber + 1}</button>
             ))}
             <button disabled={page + 1 >= pageData.totalPages || loading} onClick={() => setPage((value) => value + 1)} className="rounded-lg border px-3 py-1 disabled:opacity-50">Next</button>
           </div>
         </div>
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-primary">{error}</p>}
       </section>
 
       {passwordAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <form onSubmit={submitPassword} className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">Doi mat khau admin</h3>
-            <p className="mt-1 text-sm text-slate-500">{passwordAdmin?.username || passwordAdmin?.email}</p>
+          <form onSubmit={submitPassword} className="w-full max-w-md rounded-xl bg-card p-5 shadow-xl">
+            <h3 className="text-lg font-semibold text-foreground">Doi mat khau admin</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{passwordAdmin?.username || passwordAdmin?.email}</p>
             <div className="mt-4 space-y-3">
               <input type="password" value={passwordForm.password} onChange={(e) => setPasswordForm((value) => ({ ...value, password: e.target.value }))} placeholder="Mat khau moi" className="w-full rounded-lg border px-3 py-2 text-sm" required />
               <input type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm((value) => ({ ...value, confirmPassword: e.target.value }))} placeholder="Xac nhan mat khau moi" className="w-full rounded-lg border px-3 py-2 text-sm" required />
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button type="button" onClick={() => setPasswordAdmin(null)} className="rounded-lg border px-4 py-2 text-sm">Huy</button>
-              <button type="submit" disabled={saving} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-70">{saving ? 'Dang luu...' : 'Luu'}</button>
+              <button type="submit" disabled={saving} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-70">{saving ? 'Dang luu...' : 'Luu'}</button>
             </div>
           </form>
         </div>
