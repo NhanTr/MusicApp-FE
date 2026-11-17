@@ -351,7 +351,7 @@ export const adminApi = {
 		),
 	getUserById: (id) => fetchWithAuthJson(`/api/admin/users/${id}`),
 	updateUser: (id, payload) =>
-		apiJson(`/api/admin/users/${id}`, { method: 'PUT', body: payload, auth: true }),
+		apiJson(`/api/users/${id}`, { method: 'PUT', body: payload, auth: true }),
 	banUser: (id, payload) => apiJson(`/api/admin/users/${id}/ban`, { method: 'PUT', body: payload, auth: true }),
 	unbanUser: (id) => apiJson(`/api/admin/users/${id}/unban`, { method: 'PUT', auth: true }),
 	deleteAdminSong: (id) => apiJson(`/api/admin/songs/${id}`, { method: 'DELETE', auth: true }),
