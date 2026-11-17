@@ -1,5 +1,5 @@
 // src/hooks/useCatalogData.js
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { albumsApi, apiUtils, artistsApi, songsApi } from '@/lib/api'
 
 function getId(item) {
@@ -13,7 +13,7 @@ export function useCatalogData() {
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState('')
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
@@ -30,9 +30,12 @@ export function useCatalogData() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => {
+    const timer = setTimeout(loadData, 0)
+    return () => clearTimeout(timer)
+  }, [loadData])
 
   const albumsByArtist = useMemo(() => {
     const map = new Map()

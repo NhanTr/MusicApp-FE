@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Trash } from 'lucide-react'
 
 import { songsApi, apiUtils } from '@/lib/api'
@@ -8,7 +8,7 @@ export default function SongsAdmin() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
@@ -19,11 +19,12 @@ export default function SongsAdmin() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    load()
-  }, [])
+    const timer = setTimeout(load, 0)
+    return () => clearTimeout(timer)
+  }, [load])
 
   async function handleDelete(item) {
     if (!confirm(`Xác nhận xóa bài hát "${item.title || item.name}"?`)) return
@@ -41,20 +42,20 @@ export default function SongsAdmin() {
         <h1 className="text-2xl font-bold">Quản lý Bài hát</h1>
       </div>
 
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
+      <section className="rounded-xl border bg-card p-4 shadow-none">
         {loading ? (
-          <p className="text-sm text-slate-500">Đang tải danh sách bài hát...</p>
+          <p className="text-sm text-muted-foreground">Đang tải danh sách bài hát...</p>
         ) : (
           <div className="space-y-2">
-            {songs.length === 0 && <p className="text-sm text-slate-500">Không có bài hát.</p>}
+            {songs.length === 0 && <p className="text-sm text-muted-foreground">Không có bài hát.</p>}
             {songs.map((s) => (
               <div key={s.id || s._id} className="flex items-center justify-between gap-4 border-b py-2">
                 <div>
                   <div className="font-medium">{s.title || s.name}</div>
-                  <div className="text-xs text-slate-500">{s.artist?.name || s.artist || '—'}</div>
+                  <div className="text-xs text-muted-foreground">{s.artist?.name || s.artist || '—'}</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => handleDelete(s)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-sm text-red-600">
+                  <button onClick={() => handleDelete(s)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-sm text-primary">
                     <Trash className="w-4 h-4" />
                     Xóa
                   </button>
@@ -63,7 +64,7 @@ export default function SongsAdmin() {
             ))}
           </div>
         )}
-        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+        {error && <p className="text-sm text-primary mt-2">{error}</p>}
       </section>
     </div>
   )

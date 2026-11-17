@@ -220,14 +220,14 @@ export default function AdminSongs() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-bold text-slate-900">Bai hat</h2>
-        <button onClick={() => setShowForm((value) => !value)} className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+        <h2 className="text-xl font-bold text-foreground">Bai hat</h2>
+        <button onClick={() => setShowForm((value) => !value)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary">
           <Plus className="h-4 w-4" /> Them bai hat
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={submitSong} className="grid gap-3 rounded-xl border border-red-200 bg-red-50 p-4 md:grid-cols-3">
+        <form onSubmit={submitSong} className="grid gap-3 rounded-xl border border-primary/30 bg-primary/10 p-4 md:grid-cols-3">
           <select value={form.artistId} onChange={(e) => setForm((value) => ({ ...value, artistId: e.target.value, albumId: '' }))} className="rounded-lg border px-3 py-2 text-sm" required>
             <option value="">Chon nghe si *</option>
             {artists.map((artist) => <option key={getId(artist)} value={getId(artist)}>{artist?.name}</option>)}
@@ -238,42 +238,42 @@ export default function AdminSongs() {
           </select>
           <input value={form.title} onChange={(e) => setForm((value) => ({ ...value, title: e.target.value }))} placeholder="Ten bai hat *" className="rounded-lg border px-3 py-2 text-sm" required />
           <div>
-            <p className="text-xs text-slate-500">File am thanh *</p>
+            <p className="text-xs text-muted-foreground">File am thanh *</p>
             <input type="file" accept="audio/*" onChange={(e) => setForm((value) => ({ ...value, fileSound: e.target.files?.[0] || null }))} className="w-full rounded-lg border px-3 py-2 text-sm" required />
           </div>
           <div>
-            <p className="text-xs text-slate-500">File anh (tuy chon)</p>
+            <p className="text-xs text-muted-foreground">File anh (tuy chon)</p>
             <input type="file" accept="image/*" onChange={(e) => setForm((value) => ({ ...value, fileImage: e.target.files?.[0] || null }))} className="w-full rounded-lg border px-3 py-2 text-sm" />
           </div>
           <div className="flex gap-2 md:col-span-3">
-            <button type="submit" disabled={saving} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-70">{saving ? 'Dang them...' : 'Luu bai hat'}</button>
+            <button type="submit" disabled={saving} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-70">{saving ? 'Dang them...' : 'Luu bai hat'}</button>
             <button type="button" onClick={() => setShowForm(false)} className="rounded-lg border px-4 py-2 text-sm">Huy</button>
           </div>
         </form>
       )}
 
       <div className="relative">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tim bai hat..." className="w-full rounded-lg border px-9 py-2 text-sm" />
       </div>
 
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
-        {loading ? <p className="text-sm text-slate-500">Dang tai...</p> : (
+      <section className="rounded-xl border bg-card p-4 shadow-none">
+        {loading ? <p className="text-sm text-muted-foreground">Dang tai...</p> : (
           <div className="space-y-2">
-            {songs.length === 0 && <p className="text-sm text-slate-500">Khong co bai hat phu hop.</p>}
+            {songs.length === 0 && <p className="text-sm text-muted-foreground">Khong co bai hat phu hop.</p>}
             {songs.map((song) => {
               const songId = getId(song)
               return (
-                <div key={songId} className="flex items-center justify-between rounded-xl border bg-white px-4 py-3">
+                <div key={songId} className="flex items-center justify-between rounded-xl border bg-card px-4 py-3">
                   <div>
-                    <p className="text-sm font-medium text-slate-800">{song?.title || 'Khong ten'}</p>
-                    <p className="text-xs text-slate-500">{song?.artist?.name || 'Unknown artist'} - {song?.album?.name || 'No album'}</p>
+                    <p className="text-sm font-medium text-foreground">{song?.title || 'Khong ten'}</p>
+                    <p className="text-xs text-muted-foreground">{song?.artist?.name || 'Unknown artist'} - {song?.album?.name || 'No album'}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => openEdit(song)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs text-slate-700 hover:bg-slate-50">
+                    <button onClick={() => openEdit(song)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs text-foreground hover:bg-secondary">
                       <Edit className="h-3 w-3" /> Edit
                     </button>
-                    <button onClick={() => handleDelete(song)} disabled={deletingId === songId} className="inline-flex items-center gap-1 rounded-lg border border-red-300 px-3 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-60">
+                    <button onClick={() => handleDelete(song)} disabled={deletingId === songId} className="inline-flex items-center gap-1 rounded-lg border border-primary/30 px-3 py-1 text-xs text-primary hover:bg-primary/10 disabled:opacity-60">
                       <Trash2 className="h-3 w-3" /> {deletingId === songId ? 'Dang xoa...' : 'Xoa'}
                     </button>
                   </div>
@@ -284,22 +284,22 @@ export default function AdminSongs() {
         )}
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-          <span className="text-slate-500">Tong: {pageData.totalElements}</span>
+          <span className="text-muted-foreground">Tong: {pageData.totalElements}</span>
           <div className="flex items-center gap-2">
             <button disabled={page === 0 || loading} onClick={() => setPage((value) => Math.max(0, value - 1))} className="rounded-lg border px-3 py-1 disabled:opacity-50">Prev</button>
             {pageNumbers.map((pageNumber) => (
-              <button key={pageNumber} onClick={() => setPage(pageNumber)} className={['rounded-lg border px-3 py-1', pageNumber === page ? 'border-red-600 bg-red-600 text-white' : 'hover:bg-slate-50'].join(' ')}>{pageNumber + 1}</button>
+              <button key={pageNumber} onClick={() => setPage(pageNumber)} className={['rounded-lg border px-3 py-1', pageNumber === page ? 'border-primary bg-primary text-white' : 'hover:bg-secondary'].join(' ')}>{pageNumber + 1}</button>
             ))}
             <button disabled={page + 1 >= pageData.totalPages || loading} onClick={() => setPage((value) => value + 1)} className="rounded-lg border px-3 py-1 disabled:opacity-50">Next</button>
           </div>
         </div>
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-primary">{error}</p>}
       </section>
 
       {editingSong && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <form onSubmit={submitEdit} className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900">Edit song</h3>
+          <form onSubmit={submitEdit} className="w-full max-w-lg rounded-xl bg-card p-5 shadow-xl">
+            <h3 className="text-lg font-semibold text-foreground">Edit song</h3>
             <div className="mt-4 space-y-3">
               <input value={editForm.title} onChange={(e) => setEditForm((value) => ({ ...value, title: e.target.value }))} placeholder="Title" className="w-full rounded-lg border px-3 py-2 text-sm" required />
                 <input
@@ -328,7 +328,7 @@ export default function AdminSongs() {
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button type="button" onClick={() => setEditingSong(null)} className="rounded-lg border px-4 py-2 text-sm">Huy</button>
-              <button type="submit" disabled={saving} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-70">{saving ? 'Dang luu...' : 'Luu'}</button>
+              <button type="submit" disabled={saving} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-70">{saving ? 'Dang luu...' : 'Luu'}</button>
             </div>
           </form>
         </div>

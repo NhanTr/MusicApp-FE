@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { playlistsApi, apiUtils } from '@/lib/api'
 
@@ -7,7 +7,7 @@ export default function PlaylistsAdmin() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
@@ -18,11 +18,12 @@ export default function PlaylistsAdmin() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    load()
-  }, [])
+    const timer = setTimeout(load, 0)
+    return () => clearTimeout(timer)
+  }, [load])
 
   async function handleDelete(p) {
     if (!confirm(`Xóa playlist "${p.name || p.title}"?`)) return
@@ -40,20 +41,20 @@ export default function PlaylistsAdmin() {
         <h1 className="text-2xl font-bold">Quản lý Playlists</h1>
       </div>
 
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
+      <section className="rounded-xl border bg-card p-4 shadow-none">
         {loading ? (
-          <p className="text-sm text-slate-500">Đang tải playlists...</p>
+          <p className="text-sm text-muted-foreground">Đang tải playlists...</p>
         ) : (
           <div className="space-y-2">
-            {playlists.length === 0 && <p className="text-sm text-slate-500">Không có playlists.</p>}
+            {playlists.length === 0 && <p className="text-sm text-muted-foreground">Không có playlists.</p>}
             {playlists.map((p) => (
               <div key={p.id || p._id} className="flex items-center justify-between gap-4 border-b py-2">
                 <div>
                   <div className="font-medium">{p.name || p.title}</div>
-                  <div className="text-xs text-slate-500">{p.owner?.username || p.owner?.email || '—'}</div>
+                  <div className="text-xs text-muted-foreground">{p.owner?.username || p.owner?.email || '—'}</div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => handleDelete(p)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-sm text-red-600">
+                  <button onClick={() => handleDelete(p)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-sm text-primary">
                     Xóa
                   </button>
                 </div>
@@ -61,7 +62,7 @@ export default function PlaylistsAdmin() {
             ))}
           </div>
         )}
-        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+        {error && <p className="text-sm text-primary mt-2">{error}</p>}
       </section>
     </div>
   )

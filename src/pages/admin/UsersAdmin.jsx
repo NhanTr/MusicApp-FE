@@ -134,12 +134,12 @@ export default function UsersAdmin() {
         <h1 className="text-2xl font-bold">Quan ly nguoi dung</h1>
       </div>
 
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
+      <section className="rounded-xl border bg-card p-4 shadow-none">
         {loading ? (
-          <p className="text-sm text-slate-500">Dang tai danh sach nguoi dung...</p>
+          <p className="text-sm text-muted-foreground">Dang tai danh sach nguoi dung...</p>
         ) : (
           <div className="space-y-2">
-            {users.length === 0 && <p className="text-sm text-slate-500">Khong co nguoi dung.</p>}
+            {users.length === 0 && <p className="text-sm text-muted-foreground">Khong co nguoi dung.</p>}
             {users.map((u) => {
               const banned = isUserBanned(u)
               const isCurrentUser = isSameUser(u, currentUser)
@@ -148,7 +148,7 @@ export default function UsersAdmin() {
                 <div key={getId(u)} className="flex items-center justify-between gap-4 border-b py-2">
                   <div>
                     <div className="font-medium">{u.username || u.name || u.email}</div>
-                    <div className="text-xs text-slate-500">{u.email} - {u.role || 'User'}</div>
+                    <div className="text-xs text-muted-foreground">{u.email} - {u.role || 'User'}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     {!isCurrentUser && (
@@ -157,7 +157,7 @@ export default function UsersAdmin() {
                           Mo khoa
                         </button>
                       ) : (
-                        <button onClick={() => handleBan(u)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-sm text-red-600">
+                        <button onClick={() => handleBan(u)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-sm text-primary">
                           Khoa
                         </button>
                       )
@@ -168,7 +168,7 @@ export default function UsersAdmin() {
             })}
           </div>
         )}
-        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+        {error && <p className="text-sm text-primary mt-2">{error}</p>}
       </section>
     </div>
   )

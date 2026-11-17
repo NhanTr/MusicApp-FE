@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { uploadsApi, apiUtils } from '@/lib/api'
 
@@ -7,7 +7,7 @@ export default function UploadsAdmin() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
@@ -18,11 +18,12 @@ export default function UploadsAdmin() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    load()
-  }, [])
+    const timer = setTimeout(load, 0)
+    return () => clearTimeout(timer)
+  }, [load])
 
   async function handleApprove(item) {
     try {
@@ -49,23 +50,23 @@ export default function UploadsAdmin() {
         <h1 className="text-2xl font-bold">Quản lý Uploads</h1>
       </div>
 
-      <section className="rounded-xl border bg-white p-4 shadow-sm">
+      <section className="rounded-xl border bg-card p-4 shadow-none">
         {loading ? (
-          <p className="text-sm text-slate-500">Đang tải uploads...</p>
+          <p className="text-sm text-muted-foreground">Đang tải uploads...</p>
         ) : (
           <div className="space-y-2">
-            {uploads.length === 0 && <p className="text-sm text-slate-500">Không có uploads.</p>}
+            {uploads.length === 0 && <p className="text-sm text-muted-foreground">Không có uploads.</p>}
             {uploads.map((u) => (
               <div key={u.id || u._id} className="flex items-center justify-between gap-4 border-b py-2">
                 <div>
                   <div className="font-medium">{u.title || u.name || u.filename}</div>
-                  <div className="text-xs text-slate-500">{u.uploader?.username || u.uploader?.email || '—'}</div>
+                  <div className="text-xs text-muted-foreground">{u.uploader?.username || u.uploader?.email || '—'}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => handleApprove(u)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-sm">
                     Phê duyệt
                   </button>
-                  <button onClick={() => handleReject(u)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-sm text-red-600">
+                  <button onClick={() => handleReject(u)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-sm text-primary">
                     Từ chối
                   </button>
                 </div>
@@ -73,7 +74,7 @@ export default function UploadsAdmin() {
             ))}
           </div>
         )}
-        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+        {error && <p className="text-sm text-primary mt-2">{error}</p>}
       </section>
     </div>
   )

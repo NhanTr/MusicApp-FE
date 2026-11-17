@@ -26,3 +26,6 @@ dist-ssr
 .env
 .env.local
 .env.example
+# Browser verification output
+/test-results/
+/playwright-report/

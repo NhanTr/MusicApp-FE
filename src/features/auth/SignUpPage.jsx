@@ -63,12 +63,12 @@ function SignUpPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100">
+        <div className="auth-page min-h-screen bg-gradient-to-br from-background to-secondary">
             <div className="flex items-center justify-center p-4 pt-10">
-            <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+            <div className="w-full max-w-md bg-card rounded-xl shadow-lg p-8">
                 <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-red-600 mb-2">MusicFlow</h1>
-                <p className="text-gray-600">Đăng ký để bắt đầu phát nhạc</p>
+                <Link to="/" className="inline-flex items-center gap-2 mb-4 text-primary"><span className="text-xl">♫</span><span className="font-semibold tracking-tight">musicflow.</span></Link><h1 className="text-3xl font-bold mb-3">Thế giới âm nhạc của bạn</h1>
+                <p className="text-muted-foreground">Đăng ký để bắt đầu phát nhạc</p>
                 </div>
 
                 <form onSubmit={handleSignup} method="post" className="space-y-6">
@@ -142,7 +142,7 @@ function SignUpPage() {
                         <button
                             type="button"
                             onClick={() => setShowPassword((prev) => !prev)}
-                            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                            className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
                             aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
                             disabled={isLoading}
                         >
@@ -152,7 +152,7 @@ function SignUpPage() {
                 </FieldGroup>
 
                 {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                    <div className="bg-primary/10 border border-primary/30 text-primary px-4 py-3 rounded">
                     {error}
                     </div>
                 )}
@@ -165,16 +165,16 @@ function SignUpPage() {
 
                 <Button
                     type="submit"
-                    className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition"
+                    className="w-full bg-primary hover:bg-primary text-white font-semibold py-2 rounded-lg transition"
                     disabled={isLoading}
                 >
                     {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
                 </Button>
                 </form>
 
-                <p className="text-center mt-6 text-gray-600">
+                <p className="text-center mt-6 text-muted-foreground">
                 Đã có tài khoản?{' '}
-                <Link to="/login" className="text-red-600 hover:text-red-700 font-semibold">
+                <Link to="/login" className="text-primary hover:text-primary font-semibold">
                     Đăng nhập
                 </Link>
                 </p>

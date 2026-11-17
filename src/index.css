@@ -1,44 +1,27 @@
 @import "tailwindcss";
-
+@import "./styles/music.css";
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 3.6%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 3.6%;
-  --primary: 0 100% 50%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 0 0% 96%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 0 0% 96%;
-  --muted-foreground: 0 0% 45%;
-  --accent: 0 100% 50%;
-  --accent-foreground: 0 0% 100%;
-  --border: 0 0% 89.8%;
-  --input: 0 0% 96%;
-  --ring: 0 72.2% 50.6%;
+  color-scheme: dark;
+  --background: #0e120e;
+  --foreground: #edf0e6;
+  --card: #161c14;
+  --card-foreground: #edf0e6;
+  --primary: #c3f17c;
+  --primary-foreground: #18230e;
+  --secondary: #1c2319;
+  --secondary-foreground: #d8dfce;
+  --muted: #1a2117;
+  --muted-foreground: #929c87;
+  --accent: #26321d;
+  --accent-foreground: #c3f17c;
+  --border: #252d21;
+  --input: #141a12;
+  --ring: #9ecb66;
+  --destructive: #f09889;
   --radius: 0.5rem;
 }
-
-.dark {
-  --background: 0 0% 3.6%;
-  --foreground: 0 0% 98%;
-  --card: 0 0% 10%;
-  --card-foreground: 0 0% 98%;
-  --primary: 0 100% 50%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 0 0% 14.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 14.9%;
-  --muted-foreground: 0 0% 63.9%;
-  --accent: 0 100% 45%;
-  --accent-foreground: 0 0% 100%;
-  --border: 0 0% 14.9%;
-  --input: 0 0% 14.9%;
-  --ring: 0 72.2% 50.6%;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -55,55 +38,137 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
   --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
 }
-
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--border);
+    box-sizing: border-box;
+  }
+  html {
+    background: var(--background);
+    scroll-behavior: smooth;
   }
   body {
-    @apply bg-white text-foreground;
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
-
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    @apply font-bold text-foreground;
+    color: var(--foreground);
+    font-weight: 650;
+    letter-spacing: -0.035em;
   }
-
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  a {
+    cursor: pointer;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
   button {
-    @apply transition-colors duration-200;
+    transition:
+      color 0.18s,
+      background 0.18s,
+      border-color 0.18s,
+      opacity 0.18s;
+  }
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+  a {
+    text-decoration: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 4px;
+  }
+  input,
+  select,
+  textarea {
+    color: var(--foreground);
+    accent-color: var(--primary);
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #7e8973;
+  }
+  ::selection {
+    background: #c3f17c;
+    color: #17220f;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--background);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #3c4932;
+    border-radius: 9px;
   }
 }
-
-/* Audio player styling */
-input[type='range'] {
-  @apply cursor-pointer;
+/* Shared older forms and management pages also use the same semantic theme. */
+.bg-primary,
+.hover\:bg-primary:hover {
+  color: var(--primary-foreground);
 }
-
-input[type='range']::-webkit-slider-thumb {
-  @apply appearance-none w-4 h-4 rounded-full bg-red-700 cursor-pointer;
+.bg-primary\/10 {
+  color: var(--primary);
 }
-
-input[type='range']::-moz-range-thumb {
-  @apply w-4 h-4 rounded-full bg-red-700 cursor-pointer border-0;
+button.bg-primary,
+[data-slot="button"].bg-primary {
+  font-weight: 650;
 }
-
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  @apply w-2;
+input:not([type="range"]):not([type="checkbox"]),
+select,
+textarea {
+  min-height: 40px;
 }
-
-::-webkit-scrollbar-track {
-  @apply bg-slate-100 dark:bg-slate-900;
+input[type="range"] {
+  accent-color: var(--primary);
+  cursor: pointer;
 }
-
-::-webkit-scrollbar-thumb {
-  @apply bg-red-700 rounded-full hover:bg-red-800;
+.music-content > div > header:first-child h1,
+.music-content > div > div:first-child > h1 {
+  font-size: clamp(2rem, 4vw, 3.6rem);
+  letter-spacing: -0.055em;
+}
+.music-content .shadow-lg,
+.music-content .shadow-sm {
+  box-shadow: none;
+}
+.music-content table {
+  width: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

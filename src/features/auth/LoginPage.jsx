@@ -43,7 +43,7 @@ function LoginPage() {
                 const isAdmin = String(roleStr).toLowerCase().includes('admin') || rolesArr.some(r => String(r).toLowerCase().includes('admin'))
 
                 window.location.href = isAdmin ? '/admin' : '/music'
-            } catch (_err) {
+            } catch {
                 // If fetching profile fails, fallback to regular dashboard
                 window.location.href = '/music'
             }
@@ -95,7 +95,7 @@ function LoginPage() {
                 const isAdmin = String(roleStr).toLowerCase().includes('admin') || rolesArr.some(r => String(r).toLowerCase().includes('admin'))
 
                 window.location.href = isAdmin ? '/admin' : '/music'
-            } catch (_err) {
+            } catch {
                 window.location.href = '/music'
             }
         } catch (err) {
@@ -108,12 +108,12 @@ function LoginPage() {
 
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100">
+        <div className="auth-page min-h-screen bg-gradient-to-br from-background to-secondary">
         <div className="flex items-center justify-center p-4 pt-10">
-        <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+        <div className="w-full max-w-md bg-card rounded-xl shadow-lg p-8">
             <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-red-600 mb-2">MusicFlow</h1>
-            <p className="text-gray-600">Đăng nhập để phát nhạc</p>
+            <Link to="/" className="inline-flex items-center gap-2 mb-4 text-primary"><span className="text-xl">♫</span><span className="font-semibold tracking-tight">musicflow.</span></Link><h1 className="text-3xl font-bold mb-3">Chào mừng trở lại</h1>
+            <p className="text-muted-foreground">Đăng nhập để phát nhạc</p>
             </div>
 
             <div className="flex justify-between items-center mb-4">
@@ -121,14 +121,14 @@ function LoginPage() {
                     <button
                         type="button"
                         onClick={() => { setMode('password'); setOtpRequested(false); setError(null); }}
-                        className={`mr-3 ${mode === 'password' ? 'font-semibold text-red-600' : 'text-gray-600'}`}
+                        className={`mr-3 ${mode === 'password' ? 'font-semibold text-primary' : 'text-muted-foreground'}`}
                     >
                         Mật khẩu
                     </button>
                     <button
                         type="button"
                         onClick={() => { setMode('otp'); setError(null); }}
-                        className={`${mode === 'otp' ? 'font-semibold text-red-600' : 'text-gray-600'}`}
+                        className={`${mode === 'otp' ? 'font-semibold text-primary' : 'text-muted-foreground'}`}
                     >
                         Đăng nhập bằng OTP
                     </button>
@@ -166,7 +166,7 @@ function LoginPage() {
                     <button
                         type="button"
                         onClick={() => setShowPassword((prev) => !prev)}
-                        className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
                         aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
                         disabled={isLoading}
                     >
@@ -176,14 +176,14 @@ function LoginPage() {
             </FieldGroup>
 
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                <div className="bg-primary/10 border border-primary/30 text-primary px-4 py-3 rounded">
                 {error}
                 </div>
             )}
 
             <Button
                 type="submit"
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition"
+                className="w-full bg-primary hover:bg-primary text-white font-semibold py-2 rounded-lg transition"
                 disabled={isLoading}
             >
                 {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
@@ -223,14 +223,14 @@ function LoginPage() {
                         )}
 
                         {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                            <div className="bg-primary/10 border border-primary/30 text-primary px-4 py-3 rounded">
                                 {error}
                             </div>
                         )}
 
                         <Button
                             type="submit"
-                            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition"
+                            className="w-full bg-primary hover:bg-primary text-white font-semibold py-2 rounded-lg transition"
                             disabled={isLoading}
                         >
                             {isLoading ? (otpRequested ? 'Xác thực...' : 'Gửi mã...') : (otpRequested ? 'Xác thực OTP' : 'Gửi mã OTP')}
@@ -241,7 +241,7 @@ function LoginPage() {
                         <button
                             type="button"
                             onClick={() => { setMode('password'); setOtpRequested(false); setError(null); }}
-                            className="text-sm text-gray-600 hover:text-red-600"
+                            className="text-sm text-muted-foreground hover:text-primary"
                         >
                             Quay lại đăng nhập bằng mật khẩu
                         </button>
@@ -249,9 +249,9 @@ function LoginPage() {
                 </div>
             )}
 
-            <p className="text-center mt-6 text-gray-600">
+            <p className="text-center mt-6 text-muted-foreground">
             Chưa có tài khoản?{' '}
-            <Link to="/signup" className="text-red-600 hover:text-red-700 font-semibold">
+            <Link to="/signup" className="text-primary hover:text-primary font-semibold">
                 Đăng ký ngay
             </Link>
             </p>

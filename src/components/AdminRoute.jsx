@@ -10,10 +10,7 @@ export default function AdminRoute() {
   useEffect(() => {
     let mounted = true
 
-    if (!token) {
-      setAllowed(false)
-      return
-    }
+    if (!token) return
 
     // Fetch current user profile and check role
     ;(async () => {
@@ -28,7 +25,7 @@ export default function AdminRoute() {
         const isAdmin = String(roleStr).toLowerCase().includes('admin') || rolesArr.some(r => String(r).toLowerCase().includes('admin'))
 
         setAllowed(Boolean(isAdmin))
-      } catch (_err) {
+      } catch {
         if (!mounted) return
         setAllowed(false)
       }
@@ -48,7 +45,7 @@ export default function AdminRoute() {
   }
 
   if (!allowed) {
-    return <div className="p-4 text-red-600">Bạn không có quyền truy cập trang quản trị.</div>
+    return <div className="p-4 text-primary">Bạn không có quyền truy cập trang quản trị.</div>
   }
 
   return <Outlet />

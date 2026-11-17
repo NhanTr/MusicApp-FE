@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 function useDebouncedValue(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value)
@@ -86,6 +86,8 @@ export function usePagedSearch(fetchPage, { initialSize = 12, debounceMs = 250, 
     return () => {
       isMounted = false
     }
+    // Callers supply primitive resource identities; fetchPage is kept fresh in fetchRef.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery, pageSize, reloadToken, ...dependencies])
 
   async function loadMore() {
@@ -135,9 +137,9 @@ export function usePagedSearch(fetchPage, { initialSize = 12, debounceMs = 250, 
     }
   }
 
-  function reload() {
+  const reload = useCallback(() => {
     setReloadToken((value) => value + 1)
-  }
+  }, [])
 
   const hasMore = totalPages > 0 ? page + 1 < totalPages : items.length < totalElements || items.length >= pageSize
 
